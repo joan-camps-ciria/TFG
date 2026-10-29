@@ -1,0 +1,2689 @@
+\documentclass[runningheads,a4paper,12pt]{report}
+\usepackage{amsfonts, amssymb}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{vmargin}
+\usepackage{makeidx}
+\usepackage{float}
+\usepackage{cite}
+\usepackage{listings}
+\usepackage{longtable} 
+\usepackage{rotating}
+\renewcommand{\thesection}{\arabic{section}}
+
+\begin{document}
+
+\title{\textbf{Detección de puntos de cambio en series temporales para la predicción de averías en la línea de
+producción de Ford}}
+
+\author{
+\textbf{Joan Camps Ciria}\\
+\textit{Universidad CEU Cardenal Herrera}\\
+\textit{camcirjoa@alumnos.uchceu.es}
+}
+\date{Julio 2019}
+
+\maketitle
+
+\pagestyle{empty}
+
+\vspace*{\fill}
+
+\begin{center}
+\small	\textit{\textquotedblleft Sólo podemos ver un poco del futuro, pero lo suficiente para saber que hay mucho por hacer.\textquotedblright}
+\end{center}
+\begin{flushright}	
+Alan Mathison Turing.(1912-1954)
+\end{flushright}
+
+
+\vspace*{\fill}
+\newpage
+
+
+
+
+
+
+\begin{abstract}
+Este proyecto analiza en profundidad algorítmos de detección de puntos de cambio en series temporales para la predicción de averías en las factorias de Ford. En el proyecto se analiza una serie de repositorios o paquetes de R, en los cuales encontramos una gran cantidad de algoritmos de detección de puntos de cambio en series temporales o vectores numéricos. Se pretende analizar estos algorítmos con el fin de encontrar en una serie de tiempos una fructuación o punto de cambio que nos permita predecir cuando una máquina va a sufrir una avería en una línea de producción de Ford. Se van a lanzar estos algoritmos contra cada medición en tiempos de las diferentes patologias que una máquina puede sufrir, estas patologias pueden ir desde un tornillo pasado en una pinza neumática a la necesidad de lubricación de una valvula. Gracias a los resultados de la tesis de Eduardo García \cite{tesis}, se propuso un nuevo modelo matemático que permitía el análisis de los sub-tiempos de ciclo técnico para la mejora del rendimiento de las lineas de fabricación. Este modelo subdivide los términos a corto plazo, tiempo que le cuesta a una máquina realizar una determinada tarea, en sub-tiempos, pudiendo determinar como se están deteriorando los distintos componentes. Con la medición de esos sub-tiempos, unido a la evaluación del resultado a través de los algoritmos de punto de cambio, se puede extraer conocimiento que nos permita predecir el deterioro de un componente en una máquina.
+
+
+
+\end{abstract}
+\pagebreak
+
+
+\tableofcontents
+\pagebreak
+
+\listoffigures
+
+\newpage
+
+\setcounter{page}{4}
+\pagestyle{plain}
+
+\section{Introducción}
+\subsection{Innovación Tecnológica y Empresarial}
+Poco a poco la tecnología deja de ser un privilegio para todo tipo de personas. A día de hoy se ha transformado en una pieza clave dentro del área empresarial y personal\cite{actualidad}.\\
+
+Es practicamente inexplicable todo el avance que se ha producido en el ámbito empresarial gracias a la tecnología, fácilmente, en las situaciones que, anteriormente, llevaban semanas o meses llevarlas a cabo, hoy en día culminan en minutos o unas pocas horas. También en el esfuerzo, ya no se necesita tanto como décadas pasadas.\\
+
+Las nuevas tecnologias en las empresas se han vuelto esenciales, y cuando estas no optan por implementarlas en los diferentes procesos, las probabilidades de estancarse y perder posicionamiento aumentan considerablemente y más si se encuentran en pleno crecimiento.\\
+
+\begin{itemize}
+	\item Mayor productividad. Cuando una empresa esta tecnologicamente actualizada se reducen las horas de trabajo manual y aumenta la productividad a escalas increíbles. Obviamente, dichas tecnologías deben estar enfocadas en el objetivo de cumplir aquellas necesidades que tenga el negocio y, en paralelo acompañar a las metas del mismo. \\
+	\item Procesos óptimos. Con estas tecnologías se pueden obtener mejoras en los procesos,  una optimización fundamental, organización, cobranzas y ventas, despacho, etcétera. Se logra obtener ventajas competitivas para alcanzar un posicionamiento adecuado dentro del mercado. \\
+	\item No a las barreras en la comunicación. Con las nuevas tecnologias en las empresas la comunicación entre ejecutivos, empleados, proveedores y clientes avanzará más que en una simple llamada telefónica, ya que se puede recurrir a diferentes maneras de ejercer susodicha comunicación, como, video llamadas, boletines, redes sociales, etcétera. \\
+	\item Oficinas en cualquier lugar. Gracias a la tecnología el trabajo no se limitará a una estructura de cinco paredes, se podrá responder a los asuntos desde cualquier lugar. También se puede compartir información e interactuar con la red de contactos. \\
+	\item Toma de decisiones mejorada. Los factores tecnologicos de una empresa implican el poder proveer información operativa adaptada al tiempo real, de tal forma que, en todo momento, se encuentre disponible para ser consumida por directores y/o gerentes que tiene la empresa. Con la influencia del Big Data, la inteligencia de los sistemas está ayudando a las máquinas a dar soporte a la toma de decisiones.\\
+	
+\end{itemize}
+
+\subsection{La Cuarta Revolución Industrial}
+
+La industria de manufactura está experimentando una rápida evolución (o revolución) hacia lo que algunos han denominado Industria 4.0. En este nuevo paradigma las factorías están altamente automatizadas e informatizadas, todos sus procesos se encuentran conectados e interactúan entre sí y con procesos externos. Con sistemas de instrumentación, PLC's (Programmable Logic Controllers), CNCs (Computer Numerical Control), se generan grandes cantidades de datos que deben ser manipulados para convertirlos en información útil en cada uno de los diversos niveles del sistema de fabricación: máquina, celda de fabricación, línea de montaje, oficina técnica, gestión de producción, etc. \\
+
+En la Figura \ref{industria40} se puede ver un sistema de automatización y control distribuido en una Industria 4.0. Diversos controladores conectados entre sí mediante una red de tiempo real, y a la vez conectados con una segunda red a aplicaciones locales y/o remotas.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{industria40}
+	\caption{\textit{Sistema de automatización y control distribuido en una Industria 4.0. \cite{industria40}}} \label{industria40}
+\end{figure}
+
+Actualmente existen tecnologías consolidadas en la industria como son los PLC’s, tecnologías que han estado conviviendo con la industria durante mucho tiempo, pero que hoy en día no se adaptan a los cambios que esta demanda. Los nuevos paradigmas surgidos en la industria como el \textit{Agile Manufacturing} introducen conceptos como la reconfiguración dinámica de los sistemas de fabricación, y en particular del software. Aunque lo más importante se centra en la conectividad en la Industria 4.0. En este aspecto surgen nuevas tecnologías aplicables como el \textit{Big Data}, el \textit{Cloud Manufacturing} y la \textit{Internet of Things (IoT)} que vienen a introducir nuevos estándares en la manera de producir \cite{industria40}.
+
+\subsection{Big Data}
+Cuando hablamos de Big Data nos referimos a conjuntos de datos o combinaciones de conjuntos de datos cuyo tamaño (volumen), complejidad (variabilidad) y velocidad de crecimiento (velocidad) dificultan su captura, gestión, procesamiento o análisis mediante tecnologías y herramientas convencionales, tales como bases de datos relacionales y estadísticas convencionales o paquetes de visualización, dentro del tiempo necesario para que sean útiles. \\
+
+La naturaleza compleja del Big Data se debe principalmente a la naturaleza no estructurada de gran parte de los datos generados por las tecnologías modernas, como los  web logs, la identificación por radiofrecuencia (RFID), los sensores incorporados en dispositivos, la maquinaria, los vehículos, las búsquedas en Internet, las redes sociales como Facebook, computadoras portátiles, teléfonos inteligentes y otros teléfonos móviles, dispositivos GPS y registros de centros de llamadas. \\
+
+En la mayoría de los casos, con el fin de utilizar eficazmente el Big Data, debe combinarse con datos estructurados (normalmente de una base de datos relacional) de una aplicación comercial más convencional, como un ERP (Enterprise Resource Planning) o un CRM (Customer Relationship Management).\\
+
+\subsubsection{Casos de uso de Big Data \cite{bigdata}}
+El big data puede ayudarle a abordar una serie de actividades empresariales, desde la experiencia de cliente hasta la analítica: \\
+
+\begin{itemize}
+	\item Desarrollo de productos. Empresas como Netflix y Procter \& Gamble usan big data para prever la demanda de los clientes. Construyen modelos predictivos para nuevos productos y servicios clasificando atributos clave de productos anteriores y actuales, y modelando la relación entre dichos atributos y el éxito comercial de las ofertas. \\
+	\item Mantenimiento predictivo. Los factores capaces de predecir fallos mecánicos pueden estar profundamente ocultos entre datos estructurados (año del equipo, marca o modelo de una máquina) o entre datos no estructurados que cubren millones de entradas de registros, datos de sensores, mensajes de error y temperaturas de motor. Al analizar estos indicadores de problemas potenciales antes de que estos se produzcan, las organizaciones pueden implantar el mantenimiento de una forma más rentable y optimizar el tiempo de servicio de componentes y equipos.\\
+	\item Experiencia del cliente. Disponer de una vista clara de la experiencia del cliente es más posible que nunca. El big data permite recopilar datos de redes sociales, visitas a páginas web, registros de llamadas y otras fuentes de datos para mejorar la experiencia de interacción, así como maximizar el valor ofrecido. \\
+	\item Fraude y conformidad. En lo que a seguridad se refiere, la empresa no se enfrenta a simples piratas informáticos deshonestos, sino a equipos completos de expertos. Los contextos de seguridad y requisitos de conformidad están en constante evolución. El big data ayuda a identificar patrones en los datos que pueden ser indicativos de fraude, al tiempo que concentra grandes volúmenes de información para agilizar la generación de informes normativos. \\
+	\item Aprendizaje automático. El aprendizaje automático es actualmente un tema de gran actualidad. Los datos —concretamente big data— son uno de los motivos de que así sea. Ahora, en lugar de programarse, las máquinas pueden aprender. Esto es posible gracias a la disponibilidad de big data para crear modelos de aprendizaje automático. \\
+	\item Eficiencia operativa. Es el área en que big data tiene un mayor impacto. El big data permite analizar y evaluar la producción, la opinión de los clientes, las devoluciones y otros factores para reducir las situaciones de falta de stock y anticipar la demanda futura. El big data también puede utilizarse para mejorar la toma de decisiones en función de la demanda de mercado en cada momento.\\	
+\end{itemize}
+
+\subsection{Definición cadena de producción}
+Según Wikipedia \cite{wiki}, \textit{“la producción en cadena, producción en masa, producción en serie o fabricación en serie fue un proceso revolucionario en la producción industrial cuya base es la cadena de montaje o línea de ensamblado o línea de producción; una forma de organización de la producción que delega a cada trabajador una función específica y especializada en máquinas también más desarrolladas”}. Esta idea teórica sobre las cadenas de montaje surge con el taylorismo y el primero que tuvo la idea de ponerla en práctica, fue Ransom Olds, quien inauguró su cadena de montaje en 1901 construyendo su prototipo denominado Curved Dash. Sin embargo, el sistema de cadena de montaje tomó popularidad unos años después, gracias a Henry Ford, quien tomando la idea de Olds, desarrolló una cadena de montaje con una capacidad de producción superior y de la cual su producto emblemático fue el Ford T.\\
+
+
+
+\cleardoublepage
+
+\section{Objetivos}
+El objetivo principal del proyecto es analizar diferentes algoritmos de puntos de cambio en series temporales. Estas series temporales son mediciones que la factoría de Ford Almussafes recoge mediante PLC's que tienen instalados en sus máquinas, para poder predecir gracias a la variación de estos tiempos cuando una pieza o parte de una máquina se va a averiar.\\
+
+Así, para una mayor fiabilidad de que estas variaciones o puntos de cambio sean detectadas, se analizará una serie de "packages$"$ o repositorios del lenguaje de programaciós matemático-estadístico R que contienen diferentes algortitmos de detección de puntos de cambio en series temporales y vectores numéricos.\\
+
+Para llevar a cabo este trabajo, disponemos de varias series temporales que representan un tipo diferente de patología que sufre una máquina, que serán testeadas con cada uno de los métodos o algoritmos de detección de puntos de cambio, pudiendo así visualizar el resultado de cada uno de estos algoritmos para cada patología.\\
+
+Con la visualización de estos resultados, podremos determinar cual es el método o algoritmo óptimo para cada patología. Pudiendo así determinar cuando una máquina sufrirá una de estas patologias antes de que la sufra.\\
+
+\newpage
+\section{Estado del Arte}
+\subsection{Mantenimiento}
+El mantenimiento ha sido históricamente considerado como una problemática que empresas e instituciones deben resolver de forma efectiva. Con el paso del tiempo, las nuevas tecnologías y prácticas actuales han colocado a la función del mantenimiento como una parte integral de la productividad y operatividad. Las técnicas modernas de mantenimiento tienen el potencial para incrementar en forma significativa las ventajas en el mercado global. 
+
+\subsection{Historia del mantenimiento}
+
+La palabra mantenimiento siempre se ha empleado para designar las técnicas utilizadas para asegurar el correcto y continuo funcionamiento de equipos, maquinaria, instalaciones y servicios. Con esta descripción, se puede entender la evolución del área de mantenimiento al atravesar las distintas épocas, acorde con las necesidades de sus usuarios. La historia del mantenimiento, como parte estructural de las empresas, data del momento en el que aparecieron las máquinas para la producción de bienes y servicios. \\
+
+De hecho, desde el momento que el hombre primitivo inició una actividad artesana como la de tallar sus primitivas armas de silex, preparar refugios, construcción de canoas, etc., aparece ya la inevitable tarea de mantenimiento: afilar herramientas y armas, cuidar la estanqueidad de las canoas, etc. \\
+
+ Durante la revolución industrial el mantenimiento era correctivo, donde todas las soluciones a fallos o paradas imprevistas se solucionaban de urgencia, es decir, cuando la avería estaba a punto de producirse o ya había tenido lugar, esto provoco la aparición de talleres mecánicos, que aportaron un cierto grado de especialización en las reparaciones. Intervenían a petición de los operadores o propietarios de las maquinas, responsables de la producción de las mismas, pero sin establecer una intención preventiva en sus actuaciones. Con el tiempo estos talleres comenzaron a formar parte de las empresas como un departamento más de la misma.  \\
+
+ Pero no es hasta a partir del año 1925 en la industria Americana cuando se reconoce la aparición de los primeros sistemas organizacionales de mantenimiento con una base científica. A raíz de esto, se comienza a pensar en la conveniencia de reparar antes de que se produzca la rotura o el desgaste, con el fin de evitar interrupciones en el proceso productivo. Se planifican las reparaciones, previéndolas para un tiempo fijado de antemano, lo que da lugar al concepto de mantenimiento preventivo. \\
+
+ A partir de los años 60 con el desarrollo de las industrias electrónica, espacial y aeronáuticas, que requerían instrumentos y técnicas más sofisticadas, comienza a aparecer el mantenimiento preventivo, por lo que el mantenimiento ya no solo depende del tiempo de funcionamiento de un equipo, sino de su estado o condición efectiva. \\
+
+ Actualmente el mantenimiento se encuentra en lo que se podría denominar como la tercera generación, es decir, se dispone de equipos electrónicos de inspección y control de equipos, que son muy fiables, para conocer el estado real del equipo mediante la monitorización y medición de determinados parámetros de forma periódica o continua, como podrían ser temperaturas, ruidos, vibraciones, análisis físicos, etc. Y sistemas informáticos aplicados al mantenimiento que permiten la acumulación de datos técnicos y el tratamiento de estos. El progreso de este desarrollo concluye en la utilización de sistemas expertos y a la inteligencia artificial, que proporciona un gran campo de actuación en el diagnóstico de averías y en facilitar las actuaciones del mantenimiento en condiciones difíciles. Hoy en día, el enfoque moderno del mantenimiento industrial no solo está destinado a evitar los fallos y averías, sino que también significa un aporte dentro de las empresas para el desarrollo de programas de eliminación de paradas, reducción del consumo de recursos, aumento de la fiabilidad de los equipos, y en general, el mejoramiento de la productividad de la empresa. \\
+
+\subsection{Tipos de mantenimiento}
+
+Actualmente existen diferentes tipos de mantenimiento de equipos o sistemas en operación. Algunos de estos mantenimientos no se limitan al objetivo de corregir fallos, sino que tratan de prevenir la aparición de los mismos desde la misma etapa inicial de diseño. Entre estos tipos destacan: 
+
+\begin{itemize}
+	\item Mantenimiento Correctivo: Es el conjunto de tareas destinadas a corregir los defectos que se van presentando en los distintos equipos y que son comunicados al departamento de mantenimiento por los usuarios de los mismos.  \\
+	\item Mantenimiento Preventivo: Es el mantenimiento que tiene por misión mantener un nivel de servicio determinado en los equipos, programando las intervenciones de sus puntos vulnerables en el momento más oportuno. Suele tener un carácter sistemático, es decir, se interviene aunque el equipo no haya dado ningún síntoma de tener un problema.\\
+	\item Mantenimiento Predictivo: Es el que persigue conocer e informar permanentemente del estado y operatividad de las instalaciones mediante el conocimiento de los valores de determinadas variables, representativas de tal estado y operatividad. Para aplicar este mantenimiento, es necesario identificar variables físicas (temperatura, vibración, consumo de energía, tiempos, etc.) cuya variación sea indicativa de problemas que puedan estar apareciendo en el equipo. Es el tipo de mantenimiento más tecnológico, pues requiere de medios técnicos avanzados, y en ocasiones, de fuertes conocimientos matemáticos, físicos y/o técnicos. \\
+	\item Mantenimiento Cero Horas (Overhaul): Es el conjunto de tareas cuyo objetivo es revisar los equipos a intervalos programados bien antes de que aparezca ningún fallo, bien cuando la fiabilidad del equipo ha disminuido apreciablemente de manera que resulta arriesgado hacer previsiones sobre su capacidad productiva. Dicha revisión consiste en dejar el equipo a Cero horas de funcionamiento, es decir, como si el equipo fuera nuevo. En estas revisiones se sustituyen o se reparan todos los elementos sometidos a desgaste. Se pretende asegurar, con gran probabilidad un tiempo de buen funcionamiento fijado de antemano.  \\
+	\item Mantenimiento En Uso: es el mantenimiento básico de un equipo realizado por los usuarios del mismo. Consiste en una serie de tareas elementales (tomas de datos, inspecciones visuales, limpieza, lubricación, reapriete de tornillos) para las que no es necesario una gran formación, sino tal solo un entrenamiento breve. Este tipo de mantenimiento es la base del TPM (Total Productive Maintenance, Mantenimiento Productivo Total).  \\
+\end{itemize}
+\subsection{Mantenimiento predictivo}
+Como se ha dicho en el punto anterior, el mantenimiento predictivo es una técnica para predecir el punto de fallo de un componente en una máquina, para que dicho componente pueda reemplazarse justo antes de que falle.  Así, el tiempo en el que una máquina esta parada por un fallo de funcionamiento se minimiza y el tiempo de vida del componente se maximiza. \\
+
+El uso del mantenimiento predictivo consiste en establecer una relación entre la variable seleccionada y la vida del componente. Esto se logra mediante la toma de lecturas (por ejemplo, la vibración de un cojinete o tiempo que tarda en realizar una operación) en intervalos periódicos hasta que el componente falle.  Los fabricantes de instrumentos y software para el mantenimiento predictivo pueden recomendar rangos y valores para reemplazar los componentes de la mayoría de los equipos, esto hace que el análisis histórico sea innecesario en la mayoría de las aplicaciones.  
+
+\subsection{Técnicas de mantenimiento predictivo}
+La técnica de mantenimiento predictivo supone la medición de diversos parámetros que muestren una relación predecible con el ciclo de vida del componente. A continuación, enumeramos las técnicas más utilizadas en la industria:
+\begin{itemize}
+	\item \textbf{Análisis de vibraciones:} Esta técnica de mantenimiento predictivo se basa en el estudio del funcionamiento de las máquinas rotativas a través del comportamiento de sus vibraciones. Todas las máquinas presentan ciertos niveles de vibración, aunque se encuentren operando correctamente, sin embargo, cuando se presenta alguna anomalía, estos niveles normales de vibración se ven alterados indicando la necesidad de una revisión del equipo. \\
+Las vibraciones pueden analizarse midiendo su amplitud o descomponiéndolas de acuerdo a su frecuencia, así cuando la amplitud de la vibración sobrepasa los límites permisibles o cuando el espectro de vibración varía a través del tiempo, significa que algo malo está sucediendo y que el equipo debe ser revisado.\\
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{vibraciones}
+\caption{\textit{Analizador de vibraciones.}} \label{vibraciones}
+\end{figure}
+
+	\item \textbf{Termografía:} La Termografía es una técnica que estudia el comportamiento de la temperatura de las máquinas con el fin de determinar si se encuentran funcionando de manera correcta. \\
+ La energía que las máquinas emiten desde su superficie viaja en forma de ondas electromagnéticas a la velocidad de la luz; esta energía es directamente proporcional a su temperatura, lo cual implica que a mayor calor, mayor cantidad de energía emitida. Debido a que estas ondas poseen una longitud superior a la que puede captar el ojo humano, es necesario utilizar un instrumento que transforme esta energía en un espectro visible, para poder observar y analizar la distribución de esta energía. \\
+En la Figura \ref{termografia}, se muestra el instrumento utilizado para generar una imagen de radiación infrarroja a partir de la temperatura superficial de las máquinas, el cual se llama Cámara Termográfica. \\
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{termografia}
+\caption{\textit{Cámara Termográfica.}} \label{termografia}
+\end{figure}
+
+	\item \textbf{Análisis por ultrasonido:} El análisis por ultrasonido está basado en el estudio de las ondas de sonido de alta frecuencia producidas por las máquinas cuando presentan algún tipo de problema. \\
+Las ondas de ultrasonido tienen la capacidad de atenuarse muy rápido debido a su corta longitud, esto facilita la detección de la fuente que las produce a pesar de que el ambiente sea muy ruidoso. \\
+Los instrumentos encargados de convertir las ondas de ultrasonido en ondas audibles se llaman medidores de ultrasonido o detectores ultrasónicos. Por medio de estos instrumentos las señales ultrasónicas transformadas se pueden escuchar por medio de audífonos o se pueden observar en una pantalla como se muestra en la Figura \ref{ultrasonido}. \\
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{ultrasonido}
+\caption{\textit{Medidor de ultrasonidos.}} \label{ultrasonido}
+\end{figure}
+
+\item  \textbf{Análisis de tiempos:} Normalmente, para procesos automatizados, las máquinas tienen instalados PLC's o "Programmable Logic Controller", ver Figura \ref{plc}. Con estas computadoras instaladas en la máquina, podemos medir los tiempos que tarda una máquina en realizar una determinada acción.\\
+A partir de estos tiempos, podemos ver variaciones anómalas que pueden representar que un componente o una máquina va a fallar. \\
+Por ejemplo, el incremento progresivo o un incremento abrupto del tiempo en el que una máquina realiza una acción puede suponer que esta tiene algun tipo de avería.\\
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{plc}
+\caption{\textit{Programmable Logic Controller.}} \label{plc}
+\end{figure}
+
+
+\item \textbf{Análisis de aceite:} El análisis de aceites determina el estado de operación de las máquinas a partir del estudio de las propiedades físicas y químicas de su aceite lubricante. \\
+El aceite es muy importante en las máquinas porque sirve la protege del desgaste, controla su temperatura y elimina sus impurezas. Cuando el aceite presenta altos grados de contaminación y/o degradación, no cumple con estas funciones y la máquina comienza a fallar. \\
+
+La técnica de análisis de aceites permite cuantificar el grado de contaminación y/o degradación del aceite por medio de una serie de pruebas que se llevan a cabo en laboratorios especializados sobre una muestra tomada de la máquina cuando está operando o cuando acaba de detenerse. \\
+ El grado de degradación del aceite sirve para determinar su estado mismo porque representa la perdida en la capacidad de lubricar producida por una alteración de sus propiedades y la de sus aditivos.  \\
+	
+\end{itemize}
+
+\subsection{Mantenimiento de la industria 4.0: mantenimiento predictivo}
+El mantenimiento predictivo se considera el más avanzado de los tipos de mantenimiento industrial. Esto se debe a su carácter predictivo. Mediante parámetros físicos y objetivos, se detectan las variaciones en el estado de la máquina. De esta forma, las máquinas están en vigilancia las 24 horas de día. \\
+
+Sin embargo, aunque se considera el tipo de mantenimiento industrial más fiable y avanzado, no todas las fábricas recurren a él. Esto se debe al coste de adaptar la maquinaria para que se puedan tomar mediciones de sus parámetros y a la mejora del sistema informático que requeriría la fábrica para analizar esos datos y hacer predicciones.\\
+
+La industria 4.0 se basa en que la maquinaria ya está conectada a internet. Es decir: cada parte del proceso de producción industrial se intercomunica con las otras partes para adaptarse a las circunstancias y conseguir en todo momento el máximo rendimiento. Esto quiere decir que no es necesario hacer intervenciones en la maquinaria para poder tomar mediciones de esos parámetros físicos. Las máquinas ya se los comunican entre sí. Y esto es lo que aprovechamos para el mantenimiento industrial de la industria 4.0. \\
+
+Por lo tanto, el tipo de mantenimiento industrial más adecuado para las fábricas inteligentes es precisamente el mantenimiento predictivo. Gracias a un software de análisis, se tiene en todo momento los datos del estado de la maquinaria. El sistema informático ayuda a predecir cuándo una máquina está acusando el desgaste de la actividad industrial. También ayuda a decidir cuándo es el momento idóneo para hacer una reparación o sustitución antes de que se produzca una avería que ponga en riesgo el buen funcionamiento de una fábrica, además, gracias a las particularidades de la industria 4.0, el resto de tu maquinaria podrá adaptarse a la circunstancia y conseguir el máximo rendimiento mientras esa parte del proceso de producción está en reparación. \\
+\newpage
+\subsection{Internet of Things para mantenimiento predictivo}
+El internet de las cosas o “Internet of Things” es un concepto que se refiere a la interconexión de objetos cotidianos con internet. Este concepto permite tener una gran eficiencia en los procesos de mantenimiento preventivo y de monitoreo para sistemas industriales en plantas de producción. La idea principal es que se combine datos de sensores con información de negocio. \\
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{iot}
+ \label{iot}
+\end{figure}
+
+Existen varias soluciones que combinan estos datos recolectados por los sensores con información de negocio de sistemas de ERP, gestión de relaciones con el cliente (CRM), gestión de activos empresariales (EAM) y realidad aumentada. \\
+
+La conocida empresa SAP vende un producto llamado “SAP Predictive Maintenance and Service” en el que prometen una implementación tanto en local como en la nube, una previsión de fallas en equipos y una gestión de recursos optimizada. \\
+
+\newpage
+\section{Alcance del proyecto}
+
+Los datos utilizados en el análisis de una línea de producción se clasifican en a largo plazo o en corto plazo. A largo plazo se utiliza principalmente para la planificación del proceso, mientras que el corto plazo se utiliza para el control de procesos. El tiempo de ciclo de una máquina, es decir, su vida útil, es considerado de corto plazo. El corto plazo se puede redefinir en dos nuevos términos, “mini-term” y “micro-term”. Un mini-term podría ser definido como un elemento o parte de la máquina. Esta subdivisión nos permite comprender y estudiar el comportamiento de la máquina.\\
+
+Estos tiempos de Mini-term y Micro-term no son los mismos para cada repetición y siguen una distribución probabilística, con un valor medio y una desviación estándar. Por lo que la medición de
+tiempos de un mini-term para cada componente de una máquina varía durante la vida útil de la misma. La medición de estos mini-terms no implica costes adicionales debido a que los
+actuadores que permiten la medición de estos mini-terms (PLC's) fueron instalados en la máquina y se utilizan para su trabajo automatizado. Para medir el tiempo de cíclo de cada mini-term  se utiliza un PLC y un PC, de donde se obtendrá una serie temporal o vector numérico de mini-terms que serán analizados para detectar el punto de cambio.\\
+
+El deterioro de un componente en una máquina generan un retardo de tiempo que puede ser estudiado para predecir fallos en los componentes que pueden generar una parada de la línea de fabricación extremadamente costosa.\\
+
+En este caso se va a utilizar métodos/algoritmos de detección de puntos de cambio. Los puntos de cambio son el momento en el que la pieza o componente empieza a tener una variación anormal en los tiempos, considerando así que la pieza o componente empieza a degradarse o a fallar.\\
+
+Sabiendo esto, se van a analizar una serie de repositorios del lenguaje de programación R que contienen algoritmos de detección de puntos de cambio en series temporales o vectores numéricos. Para el análisis de estos algoritmos se va a utilizar unos datos de prueba para ver su funcionamiento y ver si el resultado es el esperado. Estos datos de prueba están en un excel, con una columna donde se refleja la hora y día de la medición, y una columna con tiempos en segundos que reflejan el tiempo que tarda una parte de una máquina en realizar una operación (Mini-term).\\
+
+Una vez comprendamos el funcionamiento de estos algoritmos, se crearán unas tablas con resultados según la patología que sufra una máquina. Tendremos diferentes casos tipo de patologías que sufren, como partes dañadas, falta de lubricación, fugas de aire, etc. Lanzaremos estos algoritmos de detección de puntos de cambio contra cada patología, para determinar en qué punto esa parte de la máquina debería ser revisada/reemplazada/lubricada/etc. En estas tablas veremos la localización del punto de cambio y el tiempo de computo del algoritmo.
+
+\section{Antecedentes}
+\subsection{Medición de los datos}
+Para la medición de los datos en las líneas de producción de Ford se utilizan PLC's que fueron instalados en las máquinas y se utilizan para su trabajo automatizado. Así, con estos PLC's y un ordenador se van midiendo y guardando los tiempos que tarda determinada parte de una máquina en realizar una determinada operación. Ver Figura \ref{simulacion}.
+\begin{figure}[htb]
+	\centering
+	\includegraphics[width=0.8\textwidth]{simulacion}
+	\caption{\textit{Configuración para la medición de tiempos. \cite{tesis}.}} \label{simulacion}
+\end{figure}
+
+\subsection{Datos de prueba para el análisis de los algoritmos}
+Para analizar el funcionamiento de los algoritmos se va a utilizar datos reales de la línea de producción de Ford Almussafes. Para estos datos de prueba aislaremos un punto de cambio ya conocido en un vector de 300 datos, donde la localización del punto de cambio está en la posición 150. \\ 
+
+Los datos vienen en un excel con más de 10.000 entradas, por lo que deberemos convertir estos datos mediante el lenguaje de programación de R, en un vector o serie temporal de únicamente 300 entradas con el punto de cambio en la posición 150. Ver Figura \ref{datos} y Figura \ref{plot_datos}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{datos}
+	\caption{\textit{Vector de datos de prueba de Ford.}} \label{datos}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{plot_datos}
+	\caption{\textit{Gráfica de datos de prueba de Ford.}} \label{plot_datos}
+\end{figure}
+\newpage
+\subsection{Datos de las patologías para el análisis de resultados}
+Para visualizar los resultados de cada patología para cada algoritmo de detección de punto de cambio, Ford Almussafes nos facilita diez casos tipo de patologías que sufren sus máquinas. A continuación veremos los datos según la patología:
+
+\subsubsection{1. Brida dañada en clampa neumática}
+El primer caso tipo es una brida dañada en una de las clampas neumáticas (Ver Figura \ref{clampa}) , que necesita ser cambiada. Los datos de esta patología constan de 1309 entradas. Ver Figura \ref{clampa1}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{clampa}
+	\caption{\textit{Dispositivo clampa neumática.}} \label{clampa}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{clampa1}
+	\caption{\textit{Datos de brida dañada.}} \label{clampa1}
+\end{figure}
+
+\subsubsection{2. Tornillo pasado o partido en clampa neumática}
+En este caso se trata de un tornillo pasado o partido en una de las clampas neumáticas (Ver Figura \ref{clampa}) que necesita ser cambiado o ajustado. Los datos de esta patología constan de 339 entradas. Ver Figura \ref{tornillo} y Figura \ref{tornillo1}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{tornillo}
+	\caption{\textit{Datos de tornillo pasado.}} \label{tornillo}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{tornillo1}
+	\caption{\textit{Gráfica de tornillo pasado en R.}} \label{tornillo1}
+\end{figure}
+\newpage
+\subsubsection{3. Ferricha adherida en clampa neumática}
+En este caso tipo se trata de ferricha adherida a una de las clampas neumáticas (Ver Figura \ref{clampa}) que necesita ser limpiada y lubricada. Los datos de esta patología constan de 1688 entradas. Ver Figura \ref{ferricha} y Figura \ref{ferricha1}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{ferricha}
+	\caption{\textit{Datos de ferricha adherida.}} \label{ferricha}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{ferricha1}
+	\caption{\textit{Gráfica de ferricha adherida en R.}} \label{ferricha1}
+\end{figure}
+\newpage
+\subsubsection{4. Falta de lubricación en el cilindro de la pinza neumática}
+En este caso se trata de falta de lubricación en el cilindro de una de las pinzas neumáticas (Ver Figura \ref{pinza}) que necesita ser lubricada.  Los datos de esta patología constan de 436 entradas. Ver Figura \ref{cilindro} y Figura \ref{cilindro1}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{pinza}
+	\caption{\textit{Dispositivo pinza neumática.}} \label{pinza}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{cilindro}
+	\caption{\textit{Datos de falta de lubricación en el cilindro.}} \label{cilindro}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{cilindro1}
+	\caption{\textit{Gráfica de falta de lubricación en el cilindro en R.}} \label{cilindro1}
+\end{figure}
+
+\subsubsection{5. Falta de lubricación en las valvulas de la pinza neumática}
+En este caso se trata de falta de lubricación en las valvulas de una de las pinzas neumáticas (Ver Figura \ref{pinza}) que necesita ser lubricada.  Los datos de esta patología constan de 137 entradas. Ver Figura \ref{cilindro} y Figura \ref{cilindro1}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{valvula}
+	\caption{\textit{Datos de falta de lubricación en las valvulas.}} \label{valvula}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{valvula1}
+	\caption{\textit{Gráfica de falta de lubricación en las valvulas en R.}} \label{valvula1}
+\end{figure}
+\newpage
+\subsubsection{6. Brida dañada en clampa neumática caso nº2}
+En este caso, como en el primer caso, se trata de una brida dañada en una de las clampas neumáticas (Ver Figura \ref{clampa}) , que necesita ser cambiada. A diferencia del primer caso, estos datos muestran un aumento abrupto en los tiempos. Los datos de esta patología constan de 1855 entradas. Ver Figura \ref{pico} y Figura \ref{pico1}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{pico}
+	\caption{\textit{Datos de brida dañada nº2.}} \label{pico}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{pico1}
+	\caption{\textit{Gráfica de brida dañada nº2 en R.}} \label{pico1}
+\end{figure}
+\newpage
+\subsubsection{7. Fallo en el cilindro de la pinza neumática}
+En este caso tipo se trata de un fallo en el cilindro de una de las pinzas neumáticas (Ver Figura \ref{pinza}) que necesita ser reemplazada. Los datos de esta patología constan de 176 entradas. Ver Figura \ref{comunicado} y Figura \ref{comunicado1}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{comunicado}
+	\caption{\textit{Datos de fallo en el cilindro.}} \label{comunicado}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{comunicado1}
+	\caption{\textit{Gráfica de fallo en el cilindro en R.}} \label{comunicado1}
+\end{figure}
+\newpage
+\subsubsection{8. Fuga de aire en las valvulas de una pinza neumática}
+En este caso se trata de una fuga de aire en las valvulas de una de las pinzas neumáticas (Ver Figura \ref{pinza}) cuyas juntas necesitan ser reemplazadas. Los datos de esta patología constan de 433 entradas. Ver Figura \ref{fuga} y Figura \ref{fuga1}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{fuga}
+	\caption{\textit{Datos de fuga de aire en valvulas.}} \label{fuga}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{fuga1}
+	\caption{\textit{Gráfica de fuga de aire en valvulas en R.}} \label{fuga1}
+\end{figure}
+\newpage
+\subsubsection{9. Falta de lubricación en una atornilladora}
+En este caso se trata de falta de lubricación en una de las atornilladoras (Ver Figura \ref{atornilladora}) cuyos ejes necesitan ser lubricados. Los datos de esta patología constan de 22322 entradas. Ver Figura \ref{atornilladora1} y Figura \ref{atornilladora2}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{atornilladora}
+	\caption{\textit{Dispositivo atornilladora.}} \label{atornilladora}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{atornilladora1}
+	\caption{\textit{Datos de falta de lubricación en atornilldora.}} \label{atornilladora1}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{atornilladora2}
+	\caption{\textit{Gráfica de falta de lubricación en atornilldora en R.}} \label{atornilladora2}
+\end{figure}
+
+\subsubsection{10. Muerte súbita de una pinza neumática}
+En este caso se trata de una muerte súbita de una de las pinzas neumáticas (Ver Figura \ref{pinza}) que necesita ser reemplazada. En este caso no se pudo saber el motivo del fallo. Los datos de esta patología constan de 723 entradas. Ver Figura \ref{muerte} y Figura \ref{muerte1}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{muerte}
+	\caption{\textit{Datos de muerte súbita de una pinza.}} \label{muerte}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{muerte1}
+	\caption{\textit{Gráfica de muerte súbita de una pinza en R.}} \label{muerte1}
+\end{figure}
+
+\cleardoublepage
+
+\section{Análisis de métodos detección de punto de cambio único}
+Se van a estudiar en profundidad todos los paquetes o repositorios de las librerias de R que contengan métodos de punto de cambio. Adjuntando todos los resultados de cada uno de estos algorítmos, con el fin de encontrar los más optimos para el interés de este proyecto.\\
+
+\subsection{Repositorio Trend \cite{trend}}
+\subsubsection{Pettitt's Test}
+El enfoque de Pettitt (1979) se aplica para detectar un único punto de cambio en series hidrológicas o series climáticas con datos continuos, es decir, realiza una prueba no paramétrica para encontrar un cambio en la tendencia central de una serie temporal. La hipótesis $H_{0}$, sin cambio, se prueba contra la hipótesis $H_{1}$ . La estadística no paramétrica se define como: 
+\begin{equation}
+{K_T}= max|{U_t,_T}|
+\end{equation}
+
+donde
+
+\begin{equation}
+{U_t,_T} = \sum_{i=1}^{t} \sum_{j=t+1}^{T} sgn({X_i-X_j})
+\end{equation}
+
+El punto de cambio de la serie se ubica en $K_T$, siempre que la estadística sea significativa. La probabilidad de significación de $K_T$ se aproxima a $p\leq0,05$ con
+
+\begin{equation}
+p \simeq 2\ exp\ \left(\frac{-6K^2_T}{T^3+T^2}\right) 
+\end{equation}
+
+La prueba o test de Pettitt se lleva a cabo de la siguiente manera:
+\begin{lstlisting}
+> require(trend)
+> data(PagesData)
+> pettitt.test(PagesData)
+
+	Pettitt's test for a single change-point detection
+
+data: PagesData
+U* = 232, p-value = 0.01456
+alternative hypotesis: two.sided
+sample estimates:
+probable change point at time K
+				17
+\end{lstlisting}
+
+Como se indica en el caso de prueba de Pettitt, con los datos de ejemplo de PagesData, el punto de cambio se encuentra en t=17 con $K_T$ = 232 y p = 0.014.\\
+\newpage
+A continuación se van a utilizar las mediciones realizadas por Ford. Estas mediciones son series de tiempos en segundos, en el que una máquina realiza una concreta operación. Estas series vienen en una hoja de cálculo de Excel, por lo que se deberán exportar estos datos para la posterior ejecución de la prueba de Pettitt.\\
+
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+
+
+> pettitt <- pettitt.test(datos)
+> print(pettitt)
+> plot(pettitt)
+
+	Pettitt's test for single change-point detection
+
+data:  datos
+U* = 22500, p-value < 2.2e-16
+alternative hypothesis: two.sided
+sample estimates:
+probable change point at time K 
+                            150 
+
+\end{lstlisting}
+
+Para esta muestra hemos cogido 300 datos donde en punto de cambio se situa justo en medio de la muestra, por lo que el punto de cambio debería ubicarse en la posición 150. En este caso el test de Pettitt nos ha dado un resultado de k=150 con $K_T$ = 22500 y un p-value $< 2.2e^{-16}$. \\
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=5cm]{pettitt_plot.png}
+	\caption{\textit{Gráfica del resultado del test de Pettitt. }} \label{pettitt_plot}
+\end{figure}
+
+
+\subsubsection{Buishand Range Test (1982)}
+
+La X indica una variable aleatoria normal, en el siguiente modelo con un solo cambio se puede proponer: 
+
+
+\begin{equation}
+X_i = \left\lbrace
+\begin{array}{ll}
+\mu +  \epsilon_i\\
+\mu + \Delta + \epsilon_i
+\end{array}
+\begin{array}{ll}
+\ i=1,...,m\\
+i=m+1,...,n
+\end{array}
+\right.
+\end{equation}
+
+$\epsilon \approx N(0,\sigma)$. La hipótesis nula $\Delta = 0$ se compara con la hipótesis alternativa $\Delta \neq 0$.
+
+En el test o prueba de rango de Buishand, las sumas parciales reescaladas y ajustadas se calculan como
+
+\begin{equation}
+S_k = \sum_{i=1}^{k} ({x_i-\hat{x}})
+\end{equation}
+\begin{equation}
+(1 \leq i  \leq n)
+\end{equation}
+
+La prueba estadística se calcula como:
+\begin{equation}
+Rb = \frac {max S_k - min S_k}{\sigma}
+\end{equation}
+
+el p.valor se estima con una simulación de Monte Carlo utilizando m réplicas.\\
+
+La prueba de rango de Buishand se lleva a cabo de la siguiente manera:\\
+
+\begin{lstlisting}
+> require(trend)
+> (res <- br.test(Nile))
+
+		Buishand range test
+
+data: Nile
+R / sqrt(n) = 2.9518, n = 100, p-value < 2.2e-16
+alternative hypothesis: true delta is not equal to 0
+sample estimates:
+probable change point at time K
+				28
+
+> plot(Nile); plot(res)
+
+\end{lstlisting}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm,height=9cm]{buishand.png}
+	 \label{buishand}
+\end{figure}
+
+Para la muestra de 300 datos de Ford:\\
+
+
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+
+>buishand <- br.test(datos)
+>print(buishand)
+>plot(buishand)
+
+	Buishand range test
+
+data:  datos
+R / sqrt(n) = 8.4412, n = 300, p-value < 2.2e-16
+alternative hypothesis: true delta is not equal to 0
+sample estimates:
+probable change point at time K 
+                            150 
+
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{buishand_plot.png}
+	 \caption{\textit{Gráfica del resultado del test de Buishand. }} \label{buishand_plot}
+\end{figure}
+
+\subsubsection{Buishand U Test (1984)}
+
+En la prueba U de Buishand, la hipótesis nula es la misma que en la prueba de rango de Buishand (ver la Ecuación  nº4). La estadística es \\
+
+\begin{equation}
+U = [n(n+1)]^{-1} \sum_{k=1}^{n-1} (S_k/D_x)^2
+\end{equation}
+
+donde\\
+
+\begin{equation}
+D_x = \sqrt{n^{-1} \sum_{i=1}^{n} (x_i - \bar{x})}
+\end{equation}
+
+y $S_k$ como se indica en la Ecuación nº5. El p.valor se estima con una simulación de Monte Carlo utilizando m réplicas.\\
+
+La prueba U de Buishand se lleva a cabo de la siguiente manera:\\
+
+\begin{lstlisting}
+> require(trend)
+> (res <- bu.test(Nile))
+
+		Buishand U test
+
+data: Nile
+U = 2.4764, n = 100, p-value < 2.2e-16
+alternative hypothesis: true delta is not equal to 0
+sample estimates:
+probable change point at time K
+				28
+
+> par(mfrow=c(2,1))
+> plot(Nile); plot(res)
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm,height=9cm]{buishandU.png}
+	 \label{buishandU}
+\end{figure}
+
+Para la muestra de 300 datos de Ford:\\
+
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+
+>buishandU <- bu.test(datos)
+>print(buishandU)
+>plot(buishandU)
+
+	Buishand U test
+
+data:  datos
+U = 24.444, n = 300, p-value < 2.2e-16
+alternative hypothesis: true delta is not equal to 0
+sample estimates:
+probable change point at time K 
+                            150 
+
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{buishandU_plot.png}
+	 \caption{\textit{Gráfica del resultado del test U de Buishand. }} \label{buishandU_plot}
+\end{figure}
+
+
+\subsubsection{Standard Normal Homogeneity Test}
+
+En la "Standard Normal Homogeneity Test" o prueba estándar de homogeneidad normal, la hipétesis nula es la misma que en la prueba de rango de Buishand (ver la Ecuación nº4). La prueba estadística es: \\
+
+\begin{equation}
+T_k = kz_1^{2} + (n-k) z_2^{2}
+\end{equation}
+
+\begin{equation}
+(1\leq k<n)
+\end{equation}
+
+donde \\
+
+\begin{equation}
+z_1 = \frac{1}{k} \sum_{i=1}^{k} \frac{x_i-\bar{x}}{\sigma}
+\end{equation}
+
+\begin{equation}
+z_2 = \frac{1}{n-k} \sum_{i=k+1}^{n} \frac{x_i-\bar{x}}{\sigma}
+\end{equation}
+
+El valor crítico es: \\
+
+\begin{equation}
+T=maxT_k
+\end{equation}
+
+La prueba estándar de homogeneidad normal se lleva a cabo de la siguiente manera:\\
+\begin{lstlisting}
+> require(trend)
+> (res <- snh.test(Nile))
+
+		Standard Normal Homogeneity Test (SNHT)
+
+data: Nile
+T = 43.219, n = 100, p-value < 2.2e-16
+alternative hypothesis: true delta is not equal to 0
+sample estimates:
+probable change point at time K
+				28
+
+> par(mfrow=c(2,1))
+> plot(Nile); plot(res)
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm,height=10cm]{snht.png}
+	 \label{snht}
+\end{figure}
+
+Para la muestra de 300 datos de Ford:\\
+
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+
+>snht <- snh.test(datos)
+>print(snht)
+>plot(snht)
+
+	Standard Normal Homogeneity Test (SNHT)
+
+data:  datos
+T = 285.01, n = 300, p-value < 2.2e-16
+alternative hypothesis: true delta is not equal to 0
+sample estimates:
+probable change point at time K 
+                            150 
+
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{snht_plot.png}
+	 \caption{\textit{Gráfica del resultado de la prueba estándar de homogeneidad normal. }} \label{snht_plot}
+\end{figure}
+\newpage
+
+\subsection{Repositorio Strucchange \cite{strucchange}}
+\subsubsection{F tests}
+Un enfoque diferente para investigar si la hipótesis nula "sin cambio estructural" se sostiene,  es utilizar las estadísticas de la prueba F o F tests. Una diferencia importante es que se especifica la alternativa: mientras que las pruebas de fluctuación generalizadas son adecuadas para varios patrones de cambios estructurales, las pruebas F estan diseñadas para probar contra una alternativa de turno único. De este modo, la alternativa puede formularse sobre la base del modelo
+
+\begin{equation}
+\beta_i = \left\lbrace
+\begin{array}{ll}
+\beta_A\\
+\beta_B
+\end{array}
+\begin{array}{ll}
+(1\leq i \leq i_0)\\
+(i_0< i \leq n)
+\end{array}
+\right.
+\end{equation}
+
+donde $i_0$ es algún punto de cambio en el intervalo $(k, n-k)$. Chow (1960) fue el primero en sugerir una prueba de este tipo sobre el cambio estructural en el caso de que se conozca el punto de cambio $i_0$. Propuso ajustar dos regresiones separadas para las dos submuestras definidas por $i_0$ y rechazar cada vez que
+
+
+\begin{equation}
+F_{i_0} = \frac {\hat{u}^\top\hat{u}-\hat{e}^\top\hat{e}}{\hat{e}^\top\hat{e}/(n-2k)}
+\end{equation}
+
+donde $\hat{e}=(\hat{u}_A,\hat{u}_B)^\top$ son los residuales del modelo completo, donde los coeficientes en las submuestras se estiman por separado, y $\hat{u}$ son los residuales del modelo restringido, donde los parámetros se ajustan una vez para todas las observaciones. La prueba estadística $F_{i_o}$ tiene una distribución $X^2$ asintótica con $k$ grados de libertad y $F{i_0}/k$ tiene una distribución F exacta con $k$ y $n-2k$ grados de libertad. El principal incoveniente de esta prueba de Chow es que el punto de cambio debe conocerse de antemano, pero hay pruebas basadas en las estadísticas de F, que no requieren una especificaión de un punto de cambio en particular, como la función Fstats o F statistics que definiremos a continuación.
+
+\subsubsection{F statistics: función Fstats}
+
+Una idea natural para extender las ideas de la prueba de Chow es calcular las estadísticas de F para todos los puntos de cambio potenciales o para todos los puntos de cambio potenciales en un intervalo $[\underline{i},\bar{i}]$ y rechazar si alguna de esas estadísticas es demasiado grande. Por lo tanto, el primer paso es calcular las estadísticas F de $F_i$ para $k < \underline{i} \leq i \leq \bar{i} < n - k$ lo cual se puede hacer fácilmente usando la función Fstats. Una vez más, el modelo a probar se especifiva mediante una interfaz de fórmula y los parámetros $\underline{i}$ y $\bar{i}$ están represantados por desde y hasta, respectivamente.\\
+Esta función devuelve un objeto de clase Fstats que contiene principalmente una serie temporal de F estadísticas. De manera que estos objetos se pueden imprimir, trazar, probar, etc. A continuación unas líneas de código de como funciona este test.\\
+\newpage
+\begin{lstlisting}
+## Nile data with one breakpoint: the annual flows drop in 1898
+## because the first Ashwan dam was built
+data("Nile")
+plot(Nile)
+
+## test the null hypothesis that the annual flow remains constant
+## over the years
+fs.nile <- Fstats(Nile ~ 1)
+plot(fs.nile)
+sctest(fs.nile)
+## visualize the breakpoint implied by the argmax of the F statistics
+plot(Nile)
+lines(breakpoints(fs.nile))
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=11cm,height=6cm]{plot_nile.png}
+ 	\caption{\textit{Gráfica de los datos de ejemplo Nile. }}
+	 \label{plot_nile}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=11cm,height=6cm]{fstats_nile.png}
+ 	\caption{\textit{Gráfica de Fstats de Nile. }}
+	 \label{fstats_nile}
+\end{figure}
+\newpage
+Sctest es una función genérica para realizar o extraer pruebas de cambio estructural basadas en varios tipos de objetos. Podemos ver el ejemplo con los datos Nile en la Figura \ref{sctest_nile}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{sctest_nile.png}
+ 	\caption{\textit{Sctest de Nile }}
+	 \label{sctest_nile}
+\end{figure}
+
+La función breakpoints calcula los puntos de ruptura en las relaciones de regresión. Dada una serie de interrupciones, la función calcula los puntos de interrupción óptimos. Como se ve en la Figura \ref{breakpoints_nile} detecta como punto de cambio la observación número 28.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{breakpoints_nile.png}
+ 	\caption{\textit{Breakpoints de Nile }}
+	 \label{breakpoints_nile}
+\end{figure}
+\newpage
+A continuación se muestra el trozo de código con  los 300 datos extraidos de una estación de soldadura de Ford, donde el punto de cambio se produce en la observación 150.\\
+
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+##cambio de vector numerico a serie temporal
+>datos_ts <- ts(datos)
+
+> fs.datos <- Fstats(datos_ts ~ 1)
+> plot(fs.datos)
+> sctest(fs.datos)
+
+	supF test
+
+data:  fs.datos
+sup.F = 6072.9, p-value < 2.2e-16
+
+> breakpoints(fs.datos)
+
+	 Optimal 2-segment partition: 
+
+Call:
+breakpoints.Fstats(obj = fs.datos)
+
+Breakpoints at observation number:
+150 
+
+Corresponding to breakdates:
+150 
+\end{lstlisting}
+
+La observación del punto de cambio es en el número 150 como se preveía anteriormente, con un p-valor$<2.2e-16$. También se puede ver el resultado en la Figura \ref{fstats_datos}.\\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{fstats_datos.png}
+ 	\caption{\textit{Fstats de los datos de Ford }}
+	 \label{fstats_datos}
+\end{figure}
+
+\subsubsection{Empirical fluctuation precesses: función efp}
+Dada una fórmula que describe un modelo de regresión lineal que se va a probar, la función efp crea un objeto de la clase $"efp"$ que contiene un proceso de fluctuación empírica ajustado de un tipo específico.\\
+
+	\textbf{Procesos CUSUM}: El primer tipo de procesos que se pueden calcular son procesos CUSUM, que contienen sumas acumuladas de residuos estandarizados. Existen dos tipos de procesos CUSUM el $"Rec-CUSUM"$ y el $"OLS-CUSUM"$, estos están disponibles en la función efp especificando el tipo de argumento "type". La estadística se puede observar en el paper (strucchange: An R Package for Testing for Structural Change in Linear Regression Models, p.5 \cite{strucchange}).\\
+De este modo, vamos a ver el código y resultado de los dos procesos de CUSUM con los datos de Ford. Primero vamos con el proceso OLS-CUSUM:
+\newpage
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+##cambio de vector numerico a serie temporal
+>datos_ts <- ts(datos)
+
+> efp <- efp(datos_ts ~ 1, type = "OLS-CUSUM")
+> plot(efp)
+> sctest(efp)
+
+	OLS-based CUSUM test
+
+data:  efp
+S0 = 8.4412, p-value < 2.2e-16
+\end{lstlisting}
+
+En el gráfico de la Figura \ref{ols_cusum} se puede observar como el punto de cambio se encuentra en la posición 150 con un p-valor$< 2.2e-16$.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{ols_cusum.png}
+ 	\caption{\textit{Proceso OLS-CUSUM con los datos de Ford}}
+	 \label{ols_cusum}
+\end{figure}
+\newpage
+Se va a seguir con la prueba ahora con el segundo tipo de proceso CUSUM, el Rec-CUSUM. Para esto sólo hay que cambiar el type=$"Rec-CUSUM"$ en el argumento de la función.
+
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+##cambio de vector numerico a serie temporal
+>datos_ts <- ts(datos)
+
+> efp1 <- efp(datos_ts ~ 1, type = "Rec-CUSUM")
+> plot(efp1)
+> sctest(efp1)
+
+	Recursive CUSUM test
+
+data:  efp1
+S = 5.2984, p-value < 2.2e-16
+
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{rec_cusum.png}
+ 	\caption{\textit{Proceso Rec-CUSUM con los datos de Ford}}
+	 \label{rec_cusum}
+\end{figure}
+
+	\textbf{Procesos MOSUM}: Otra posibilidad para detectar un cambio estructural es analizar sumas móviles de residuos (en lugar de usar sumas acumuladas de los mismos residuos). En MOSUM también existen dos tipos cómo en CUSUM, esta el Rec-MOSUM y el OLS-MOSUM.  La estadística se puede observar en el paper (strucchange: An R Package for Testing for Structural Change in Linear Regression Models, p.5 \cite{strucchange}).\\
+
+A continuación, se muestra el código y resultado de los procesos OLS-MOSUM y Rec-MOSUM respectivamente:
+
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+##cambio de vector numerico a serie temporal
+>datos_ts <- ts(datos)
+
+> efp2 <- efp(datos_ts ~ 1, type = "OLS-MOSUM")
+> plot(efp2)
+> sctest(efp2)
+
+
+	OLS-based MOSUM test
+
+data:  efp2
+M0 = 2.8345, p-value = 0.01
+
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{ols_mosum.png}
+ 	\caption{\textit{Proceso OLS-MOSUM con los datos de Ford}}
+	 \label{ols_mosum}
+\end{figure}
+ \newpage
+\begin{lstlisting}
+##lectura del excel
+> muestras <- read_excel("muestras.xlsx", sheet = "Hoja1")
+##seleccion de la columna 3 'mini-term'
+> filtro <- muestras[,3]
+##cambio de lista a vector numerico
+> datos <- as.numeric(unlist(filtro))
+##seleccion de los 300 datos con el change point en el 150
+> datos <- datos[2888:3187]
+##cambio de vector numerico a serie temporal
+>datos_ts <- ts(datos)
+
+> efp3 <- efp(datos_ts ~ 1, type = "Rec-MOSUM")
+> plot(efp3)
+> sctest(efp3)
+
+
+	Recursive MOSUM test
+
+data:  efp3
+M = 5.5759, p-value = 0.01
+
+\end{lstlisting}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{rec_mosum.png}
+ 	\caption{\textit{Proceso Rec-MOSUM con los datos de Ford}}
+	 \label{rec_mosum}
+\end{figure}
+\newpage
+\subsection{Repositorio cpm \cite{cpm}}
+El package cpm o change point model es una implementación de varios modelos diferentes de puntos de cambio para realizar la detección de cambios tanto paramétricos como no paramétricos en flujos de datos univariados.\\
+Este paquete implementa los change points model utilizando diferentes pruebas estadísticas que se pueden elegir para optimizar la detección del punto de cambio:
+\begin{itemize}
+	\item \textit{Student} Prueba estadística t de Student. Se utiliza para detectar cambios de media en una secuencia Gaussiana.
+	\item \textit{Bartlett} Prueba estadística de Bartlett. Se utiliza para detectar cambios de varianza en una secuencia Gaussiana.
+	\item \textit{GLR} Prueba estadística de la Relación de Probabilidad Generalizada . Se utiliza para detectar cambios de media y varianza en una secuencia Gaussiana.
+	\item \textit{Exponential} Prueba estadística de la Relación de Probabilidad Generalizada para la distribución exponencial. Se utiliza para detectar cambios en el parámetro de una secuencia distribuida exponencialmente.
+	\item \textit{FET} Prueba estadística exacta de los Pescadores . Se utiliza para detectar cambios de parámetros en una secuencia de Bernoulli.
+	\item \textit{Mann-Whitney} Prueba estadística de Mann-Whitney . Se utiliza para detectar cambios de ubicación en una secuencia con una distribución no Gaussiana.
+	\item \textit{Mood} Prueba estadística  de Mood . Se utiliza para detectar cambios de escala en una secuencia con una distribución no Gaussiana.
+	\item \textit{Lepage} Prueba estadística de Lepage. Se utiliza para detectar la ubicación y los cambios en una secuencia con una distribución no Gaussiana.
+	\item \textit{Kolmogorov-Smirnov} Prueba estadística de Kolmogorov-Smirnov. Se utiliza para detectar cambios arbitrarios en una secuencia con una distribución no Gaussiana.
+	\item \textit{Cramer-von-Mises} Prueba estadística de Cramer-von-Mises. Se utiliza para detectar cambios arbitrarios en una secuencia con una distribución no Gaussiana.
+\end{itemize}
+
+Para obtener una descripción más completa de estas estadísticas consultar el manual completo del paquete \cite{cpm}.\\
+
+CPM es un enfoque para detección de cambios secuenciales que permite que las pruebas de hipótesis estadísticas se implementen de manera secuencial. Las dos funciones principales del repositorio son detectChangePoint para detectar puntos de cambio únicos, y processStream para detectar múltiples puntos de cambio. Para la detección de puntos de cambio únicos existen dos tipos principales de problemas de detección de cambios, por lotes (batch) y secuenciales. 
+
+\subsubsection{Detección por lotes o 'batch'} En este caso, hay una secuencia de longitud fija que consta de n observaciones de las variables aleatorias, y se quiere probar si esta secuencia contiene puntos de cambio. Este tipo de detección de cambios es retrospectivo, lo que significa que la decisión de si se ha producido un cambio en un punto en particular de la secuencia se realiza utilizando todas las observaciones disponibles, incluidas aquellas que se producen más adelante en la secuencia. Estos métodos por lotes funcionan bien cuando solo hay un pequeño número de puntos de cambio, pero pueden ser inviables computacionamente cuando hay un mayor número de puntos de cambio. En el package cpm la función por lotes se escribe de la siguiente manera: detectChangePointBatch. A continuación se verá su funcionamiento con los datos de prueba de Ford para cada tipo de estadística descrita anteriormente:\\
+
+\textbf{Student }$>$ detectChangePointBatch(datos,"Student",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=1]{batch_student.png}
+	 \label{batch_student}
+\end{figure}
+
+\textbf{Bartlett} $>$ detectChangePointBatch(datos,"Bartlett",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{batch_bartlett.png}
+	 \label{batch_bartlett}
+\end{figure}
+\newpage
+\textbf{GLR} $>$ detectChangePointBatch(datos,"GLR",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{batch_glr.png}
+	 \label{batch_glr}
+\end{figure}
+
+\textbf{Exponential} $>$ detectChangePointBatch(datos,$"$Exponential",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{batch_exponential.png}
+	 \label{batch_exponential}
+\end{figure}
+
+\textbf{Mann-Whitney} $>$ detectChangePointBatch(datos,"Mann-Whitney",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{batch_mann.png}
+	 \label{batch_mann}
+\end{figure}
+\newpage
+\textbf{Mood} $>$ detectChangePointBatch(datos,"Mood",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{batch_mood.png}
+	 \label{batch_mood}
+\end{figure}
+
+\textbf{Lepage} $>$ detectChangePointBatch(datos,"Lepage",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{batch_lepage.png}
+	 \label{batch_lepage}
+\end{figure}
+
+\textbf{Kolmogorov-Smirnov} $>$ detectChangePointBatch(datos,"Kolmogorov-Smirnov",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{batch_k.png}
+	 \label{batch_k}
+\end{figure}
+\newpage
+\textbf{Cramer-von-Mises} $>$ detectChangePointBatch(datos,$"$Cramer-von-Mises",alpha = 0.05)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{batch_cramer.png}
+	 \label{batch_cramer}
+\end{figure}
+
+\textit{alpha:} El paquete incluye una función getBatchThreshold que devuelve el umbral asociado con una elección particular de alfa y n. Esta función se llama automáticamente cada vez que se llama detectChangePointBatch, por lo que el usuario solo necesita proporcionar el valor deseado de alfa. Los valores permitidos para este argumento son 0.05, 0.01, 0.005, 0.001.\\
+
+\subsubsection{Detección secuencial}
+En este caso, la secuencia no tiene una longitud fija. En cambio, las observaciones se reciben y procesan secuencialmente a lo largo del tiempo. Cuando se ha recibido cada observación, se toma una decisión acerca de si se ha producido un cambio basándose únicamente en las observaciones recibidas hasta el momento. Si no se marca ningún cambio, se procesa la siguiente observación en la secuencia. La formulación secuencial permite que las secuencias que contienen múltiples puntos de cambio se manejen fácilmente; cada vez que se detecta un punto de cambio, el detector de cambios simplemente se reinicia desde la siguiente observación en la secuencia. La función de detección secuencial en el paquete 'cpm' se escribe como detectChangePoint y va ser testeada con los datos de prueba de Ford para cada tipo de estadística.\\
+
+\textit{ARL0:} Se determina el ARL0 que debería tener el CPM, que corresponde al número promedio de observaciones antes de que se produzca un falso positivo, asumiendo que la secuencia no sufre un cambio. Solo se permiten varios valores para ARLO, específicamente, debe de tener uno de los siguientes valores: 370, 500, 600, 700, ..., 1000, 2000, 3000, ..., 10000, 20000, ..., 50000.\\
+
+\textit{startup:} Es el número de obsevaciones después de las cuales comienza el monitoreo. No se marcarán puntos de cambio durante este período de inicio. Esto debe establecerse en al menos 20.
+\newpage
+\textbf{Student }$>$ detectChangePoint(datos,"Student",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=1]{seq_student.png}
+	 \label{seq_student}
+\end{figure}
+\textbf{Bartlett}$>$ detectChangePoint(datos,"Bartlett",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_bartlett.png}
+	 \label{seq_bartlett}
+\end{figure}
+\textbf{GLR}$>$ detectChangePoint(datos,"GLR",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_glr.png}
+	 \label{seq_glr}
+\end{figure}
+\textbf{Exponential}$>$ detectChangePoint(datos,$"$Exponential",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_exponential.png}
+	 \label{seq_exponential}
+\end{figure}
+\newpage
+\textbf{FET}$>$ detectChangePoint(datos,"FET",ARL0 = 500, startup = 300, lambda = 0.3)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_fet.png}
+	 \label{seq_fetl}
+\end{figure}
+\textbf{Mann-Whitney}$>$ detectChangePoint(datos,"Mann-Whitney",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_mann.png}
+	 \label{seq_mann}
+\end{figure}
+\textbf{Mood}$>$ detectChangePoint(datos,"Mood",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_mood.png}
+	 \label{seq_mood}
+\end{figure}
+\textbf{Lepage}$>$ detectChangePoint(datos,"Lepage",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_lepage.png}
+	 \label{seq_lepage}
+\end{figure}
+\newpage
+\textbf{Kolmogorov-Smirnov}$>$ detectChangePoint(datos,"Kolmogorov-Smirnov",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_k.png}
+	 \label{seq_k}
+\end{figure}
+\textbf{Cramer-von-Mises}$>$ detectChangePoint(datos,$"$Cramer-von-Mises",ARL0 = 500, startup = 300)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{seq_cramer.png}
+	 \label{seq_cramer}
+\end{figure}
+\newpage
+\subsection{Repositorio changepoint \cite{changepoint}}
+\subsubsection{Identificación de cambios en la media: cpt.mean}
+Esta función calcula el posicionamiento óptimo y el número de puntos de cambio para los datos utilizando diferentes métodos que son elegidos por el usuario. Esta función se utiliza para encontrar cambios en la media de los datos utilizando la estadística de prueba especifica en el parámetro 'test.stat', este puede ser "Normal$"$ o $"$CUSUM".\\
+
+Los puntos de cambio se encuentran utilizando el método suministrado por el usuario en el parámetro 'method', que puede ser un solo punto de cambio (AMOC) o varios puntos de cambio utilizando métodos exactos (PELT o SegNeigh) o aproximados (BinSeg).\\
+
+\textbf{AMOC} devuelve la ubicación más probable de un punto de cambio si se identificó un cambio o NA si no hay punto de cambio, y el p-valor del punto de cambio identificado.\\
+
+\textbf{PELT} devuelve un vector que contiene las ubicaciones del punto de cambio para la penalización provista.\\
+
+\textbf{SegNeigh} devuelve una matriz que contiene las posiciones de puntos de cambio, las ubicaciones de cambio óptimas para la penalización suministrada y la penalización utilizada.\\
+
+\textbf{BigSeg}  devuelve una matriz que contene las posiciones de los puntos de cambio en la primera fila y el estadístico de prueba en la segunda fila.\\
+
+Se puede elegir el tipo de penalización en el parámetro 'penalty', se puede elegir "None", "SIC", "BIC", "MBIC$"$, $"$Asymptotic", "Manual", etc. (ver \cite{changepoint}).\\
+
+Para la visualizacón de su funcionamiento, se van a utilizar los parámetros que vienen predeterminados en esta función, que son el método $"$AMOC$"$ con un tipo de penalización "MBIC$"$ y una prueba estadística "Normal". Así pues, a continuación veremos los resultados con los datos de prueba de Ford:
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{mean_1.png}
+	 \label{mean_1}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{mean_2.png}
+	 \label{mean_2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{mean_plot.png}
+ 	\caption{\textit{Gráfica de cpt.mean}}
+	 \label{mean_plot}
+\end{figure}
+
+También vamos a ver el funcionamiento de la función con la prueba estadística de $"$CUSUM". Utilizaremos  el método $"$AMOC$"$ y una penalización "Manual$"$:\\
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{mean_cusum.png}
+	 \label{mean_cusum}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{mean_cusum1.png}
+	 \label{mean_cusum1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{mean_cusum2.png}
+ 	\caption{\textit{Gráfica de cpt.mean $"$CUSUM"}}
+	 \label{mean_cusum2}
+\end{figure}
+
+
+\subsubsection{Identificación de cambios en la varianza: cpt.var}
+Esta función se utiliza para encontrar cambios en la varianza de los datos. Esta utiliza la misma parametrización que cpt.mean vista en el apartado anterior. Así, para la visualización de su funcionamiento se van a utilizar los parámetros que vienen predeterminados, es decir, el método  $"$AMOC$"$ con un tipo de penalización "MBIC$"$ y una prueba estadística "Normal". 
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{var_1.png}
+	 \label{var_1}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{var_2.png}
+	 \label{var_2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{var_plot.png}
+ 	\caption{\textit{Gráfica de cpt.var}}
+	 \label{var_plot}
+\end{figure}
+
+En este caso, por cambios en la varianza, el algoritmo no ha sido capaz de detectar el punto de cambio. Aunque en la gráfica se puede observar que el cambio existe en la posición 150.\\
+\newpage
+También veremos el funcionamiento con la prueba estadística $"$CSS", con el método $"$AMOC$"$ y una penalización "Manual$"$:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{var_css.png}
+	 \label{var_css}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{var_css1.png}
+	 \label{var_css1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{var_css2.png}
+ 	\caption{\textit{Gráfica de cpt.var $"$CSS"}}
+	 \label{var_css2}
+\end{figure}
+
+\subsubsection{Identificación de cambios en la media y la varianza: cpt.meanvar}
+Esta función se utiliza para encontrar cambios en la media y la varianza de los datos. Como hemos visto en los apartados anteriores, se va a ver su funcionamiento con los datos de prueba de Ford con los parámetros que vienen predeterminados:
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{meanvar_1.png}
+	 \label{meanvar_1}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{meanvar_2.png}
+	 \label{meanvar_2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{meanvar_plot.png}
+ 	\caption{\textit{Gráfica de cpt.meanvar}}
+	 \label{meanvar_plot}
+\end{figure}
+
+También veremos el funcionamiento para encontrar cambios en la media y la varianza con una prueba estadística $"$Exponential", el método $"$AMOC$"$  y una penalización "Manual$"$:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{meanvar_ex.png}
+	 \label{meanvar_ex}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{meanvar_ex1.png}
+	 \label{meanvar_ex1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{meanvar_ex2.png}
+ 	\caption{\textit{Gráfica de cpt.meanvar $"$Exponential"}}
+	 \label{meanvar_ex2}
+\end{figure}
+
+\newpage
+
+\section{Análisis de métodos de detección de puntos de cambio múltiple}
+\subsection{Repositorio wbsts \cite{wbsts}}
+\subsubsection{The Wild Binary Segmentation Algorithm}
+The Wild Binary Segmentation Algorithm o Algoritmo de Segmentación Binaria Salvaje es una técnica para la estimación del número y ubicaciones de los puntos de cambio en la estructura de segundo orden de una serie temporal. El núcleo del procedimiento de segmentación es el método de Segmentación Binaria Salvaje (WBS), una técnica con un cierto mecanismo aleatorio. La ventaja de WBS sobre la segmentación binaria estándar radica en su función de localización, a la cual funciona en los casos en que las distancias entre los puntos de cambio son cortas. Además, no restringe el número total de puntos de cambio que puede tener una serie temporal.  El modelo estadístico se puede ver en ( Multiple Change-point Detection for non-stationary Time Series Using Wild Binary Segmentation, p.6 \cite{wbsts}).\\
+Se puede estimar el punto de cambio via la segmentación binaria normal o via la segmentación binaria salvaje cambiando el parámetro M=1/0. M=1 para BS y M=0 para WBS. A continuación se muestra el funcionamiento del algoritmo para la muestra de los datos de Ford.\\
+
+\textbf{Binary Segmentation}
+
+\begin{lstlisting}
+##cambio de vector numerico a serie temporal
+>datos_ts <- ts(datos)
+
+##Estimate the change points via Binary Segmentation
+
+> bs <- wbs.lsw(datos_ts,M=1)
+> print(bs)
+
+$`cp.bef`
+[1] 147
+
+$cp.aft
+    
+147 
+
+\end{lstlisting}
+\newpage
+cp.bef devuelve el punto de cambio estimado antes des post-procesado y el cp.aft devuelve el punto de cambio estimado después del post-procesado. Añadiendo cp.aft al final de la línea de código del algoritmos podemos extraer únicamente el punto de cambio estimado después del post-procesado. Así, como podemos observar a continuación,  el algorítmo devuelve 147 como estimación del punto de cambio.\\
+
+\begin{lstlisting}
+> wbs.lsw(datos_ts,M=1)$cp.aft
+
+147
+\end{lstlisting}
+
+\textbf{Wild Binary Segmentation}
+\begin{lstlisting}
+
+##cambio de vector numerico a serie temporal
+>datos_ts <- ts(datos)
+
+##Estimate the change points via Wild Binary Segmentation
+
+> wbs <- wbs.lsw(datos_ts,M=0)
+> print(wbs)
+
+$`cp.bef`
+[1] 147  90 186  49 120 265  71 106 280
+
+$cp.aft
+[1] 147
+
+> wbs.lsw(datos_ts,M=0)$cp.aft
+
+147
+\end{lstlisting}
+
+El WBS al tener un cierto mecanismo aleatorio, en cada ejecución devuelve una serie de puntos de cambio antes del post-procesado de forma aleatoria. Dando así, un resultado diferente para cada ejecución.
+\newpage
+\subsection{Repositorio wbs \cite{wbs}}
+El siguiente repositorio ofrece las técnicas de segmentación binaria estandar y salvaje. En este caso, son una técnica para la estimación del número y ubicación de múltiples puntos de cambio en datos númericos y no en series temporales como hemos descrito en el punto anterior. Con la muestra de los datos de Ford vamos a ver a continuación el funcionamiento de estos dos algoritmos.\\
+
+\textbf{Binary Segmentation} para identificar ubicaciones potenciales de los puntos de cambio en la media del vector de entrada. El objeto devuelto se puede pasar a la función changepoints, que encuentra la estimación final de los puntos de cambio en función del umbral.
+
+\begin{lstlisting}
+
+
+##Estimate the change points via Binary Segmentation
+
+> s <- sbs(datos)
+> plot(s)
+> changepoints(s)
+\end{lstlisting}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.6]{sbs_res.png}
+	 \label{sbs_res}
+\end{figure}
+\begin{itemize}
+	\item \textbf{no.cpt.th} devuelve el número de puntos de cambio detectados.
+	\item \textbf{cpt.th} devuelve una lista de las ubicaciones de los puntos de cambio detectados.
+	\item \textbf{Kmax} devuelve el número máximo de puntos de cambio detectados.
+	
+\end{itemize}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{sbs.png}
+ 	\caption{\textit{Gráfica Binary Segmentation}}
+	 \label{sbs}
+\end{figure}
+Se puede observar tanto en la gráfica \ref{sbs} como en la lista devuelta por el algoritmo que el cambio de punto mas relevante se encuentra en el 150.\\
+
+\textbf{Wild Binary Segmentation} para identificar ubicaciones potenciales de los puntos de cambio en la media del vector de entrada. El objeto devuelto se puede pasar a la función changepoints, que encuentra la estimación final de los puntos de cambio en función de los criterios de parada elegidos.
+\begin{lstlisting}
+
+##Estimate the change points via Wild Binary Segmentation
+
+> w <- wbs(datos)
+> plot(w)
+> changepoints(w)
+\end{lstlisting}
+Se va a desglosar el resultado de changepoints(w) para su perfecta visualización.\\
+\begin{itemize}
+	\item \textbf{no.cpt.th} devuelve el número de puntos de cambio detectados.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[]{no_cpt.png}
+ 	 \label{no_cpt}
+	\end{figure}
+	\item \textbf{cpt.th} devuelve una lista de las ubicaciones de los puntos de cambio detectados.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.6]{cpt_th.png}
+ 	 \label{cpt_th}
+	\end{figure}
+	\item \textbf{Kmax} devuelve el número máximo de puntos de cambio detectados.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[]{kmax.png}
+ 	 \label{kmax}
+	\end{figure}
+	\item \textbf{ic.curve} devuelve una lista con los valores de los criterios de información elegidos.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.6]{ic_curve.png}
+ 	 \label{ic_curve}
+	\end{figure}
+	\item \textbf{cpt.ic} devuelve una lista con los puntos de cambio detectados para cada criterio de información considerado.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.6]{cpt_ic.png}
+ 	 \label{cpt_ic}
+	\end{figure}
+	
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm,height=8cm]{plot_wbs.png}
+ 	\caption{\textit{Gráfica Binary Segmentation}}
+	 \label{plot_wbs}
+\end{figure}
+Como se puede observar en los resultados obtenidos por el algoritmo de segmentación binaria salvaje este extraen 50 puntos potenciales para cada criterio de información. Estos estan ordenador por orden de prioridad, se pueden ver en el apartado de cpt.ic.
+
+\newpage
+
+\subsection{Repositorio cpm \cite{cpm}}
+\subsubsection{processStream: detección de múltiples cambios de punto en una secuencia}
+Esta función se utiliza para detectar múltiples puntos de cambio en una secuencia de observaciones utilizando el marco del modelo de punto de cambio (CPM) para la detección de cambios secuencial .Las observaciones se procesan en orden, comenzando con la primera, y se toma una decisión después de cada observación si se ha producido un punto de cambio.\\
+
+A diferencia de la función detectChange, processStream no termina y regresa cuando se encuentra un punto de cambio. En su lugar, un nuevo CPM se inicializa inmediatamente después del punto de cambio, y se descartan todas las observaciones anteriores. Luego continúa el monitoreo, a partir de la primera observación después del punto de cambio. Si se descubren más puntos de cambio más adelante en la secuencia, el CPM se reinicializa nuevamente después de cada uno. De esta manera, se procesará toda la secuencia de observaciones y se pueden detectar múltiples puntos de cambio.\\
+
+
+\textbf{Student }$>$ processStream(datos,"Student",ARL0=500,startup=20)
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.95]{stream_student.png}
+	 \label{stream_student}
+\end{figure}
+\textbf{Bartlett}$>$ processStream(datos,"Bartlett",ARL0=500,startup=50)
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.9]{stream_bartlett.png}
+	 \label{stream_bartlett}
+\end{figure}
+\textbf{GLR}$>$ processStream(datos,"GLR",ARL0=500,startup=80)
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.8]{stream_glr.png}
+	 \label{stream_glr}
+\end{figure}
+\textbf{Exponential}$>$ processStream(datos,$"$Exponential",ARL0 = 500, startup = 20)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{stream_exponential.png}
+	 \label{stream_exponential}
+\end{figure}
+\textbf{FET}$>$ processStream(datos,"FET",ARL0=500,startup=80,lambda=0.3)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{stream_fet.png}
+	 \label{stream_fetl}
+\end{figure}
+\textbf{Mann-Whitney}$>$ processStream(datos,"Mann-Whitney",ARL0=500,startup=40)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{stream_mann.png}
+	 \label{stream_mann}
+\end{figure}
+\textbf{Mood}$>$ processStream(datos,"Mood",ARL0=500,startup=20)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{stream_mood.png}
+	 \label{stream_mood}
+\end{figure}
+\textbf{Lepage}$>$ processStream(datos,"Lepage",ARL0=500,startup=40)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{stream_lepage.png}
+	 \label{stream_lepage}
+\end{figure}
+\begin{center}\textbf{Kolmogorov-Smirnov}$>$ processStream(datos,"Kolmogorov-Smirnov",ARL0=500,startup=40)\end{center}
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{stream_k.png}
+	 \label{stream_k}
+\end{figure}
+\textbf{Cramer-von-Mises}$>$ processStream(datos,$"$Cramer-von-Mises",ARL0=500,startup=40)
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{stream_cramer.png}
+	 \label{stream_cramer}
+\end{figure}
+\newpage
+\subsection{Repositorio not \cite{not}}
+\subsubsection{Narrowest-Over-Threshold Change-Point Detection}
+La función Narrowest-Over-Threshold, o umbral más estrecho en castellano, identifica las ubicaciones potenciales de los puntos de cambio en los datos siguiendo el modelo de "señal determinista + ruido" (ver \cite{not}) en varios escenarios diferentes. El objeto devuelto por esta función se puede pasar a la función 'features', que encuentra la estimación final de los puntos de cambio en función del criterio de detención elegido.\\
+
+\textit{cpt} Indica las ubicaciones de los puntos de cambio.\\
+ 
+\textit{contrast} este parámetro determina el tipo de función contraste utilizada en el algoritmo NOT. A contiunuación, veremos con los datos de prueba de Ford del funcionamiento del algoritmo con los diferentes contrastes. 
+
+\begin{itemize}
+	\item \textit{pcwsConstMean} Señal constante por partes con ruido Gaussiano y desviación estándar constante.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[]{not_constmean.png}
+	 \label{not_constmean}
+	\end{figure}
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{not_constmean_plot.png}
+	 \label{not_constmean_plot}
+	\end{figure}
+\newpage
+	\item \textit{pcwsConstMeanHT} Media constante por partes con un ruido de cola pesada y una desviación estándar constante.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[]{not_HT.png}
+	 \label{not_HT}
+	\end{figure}
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{not_HT_plot.png}
+	 \label{not_HT_plot}
+	\end{figure}
+	\item \textit{pcwsLinContMean} Señal continua lineal por partes con ruido Gaussiano y desviación estándar constante.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[]{not_lincmean.png}
+	 \label{not_lincmean}
+	\end{figure}
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{not_lincmean_plot.png}
+	 \label{not_lincmean_plot}
+	\end{figure}
+	\item \textit{pcwsLinMean} Señal lineal por partes con ruido Gaussiano y desviación estándar constante.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[]{not_linmean.png}
+	 \label{not_linmean}
+	\end{figure}
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{not_linmean_plot.png}
+	 \label{not_linmean_plot}
+	\end{figure}
+	\item \textit{pcwsQuadMean} Señal cuadrática por partes con ruido Gaussiano y desviación estándar constante.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[]{not_quadmean.png}
+	 \label{not_quadmean}
+	\end{figure}
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{not_quadmean_plot.png}
+	 \label{not_quadmean_plot}
+	\end{figure}
+	\item \textit{pcwsConstMeanVar} Señal constante por partes y desviación estándar constante por partes del ruido Gaussiano.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[]{not_var.png}
+	 \label{not_var}
+	\end{figure}
+	\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{not_var_plot.png}
+	 \label{not_var_plot}
+	\end{figure}
+\end{itemize}
+\newpage
+
+\newpage
+\subsection{Repositorio changepoint.np \cite{changepoint.np}}
+Calcula el posicionamiento óptimo y la cantidad de puntos de cambio para los datos según la función de costo y la penalización especificadas por el usuario. Es decir, identifica cambios usando una función de costo no paramétrico. Como hemos visto en el "repositorio de changepoint" esta función tiene un parámetro 'penalty' que puede ser elegida por el usuario, como "None", "SIC", "BIC", "MBIC$"$, $"$Asymptotic", "Manual", etc.\\
+A diferencia de $"$changepoint",  $"$changepoint.np" solo utiliza el método "PELT$"$ y una sola prueba estadística de distribución empírica. Es decir, esta función se usa para encontrar múltiples cambios en un conjunto de datos utilizando el algoritmo de cambio de punto PELT con una función de costo no paramétrico basada en la distribución empírica. Podemos ver su funcionamiento con el vector de prueba de Ford:
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{np_1.png}
+	 \label{np_1}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{np_2.png}
+	 \label{np_2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{np_plot.png}
+ 	\caption{\textit{Gráfica de cpt.np}}
+	 \label{np_plot}
+\end{figure}
+\newpage
+\subsection{Repositorio breakfast \cite{breakfast}}
+El repositorio breakfast realiza la detección de múltiples puntos de cambio en las secuencias de datos, o la segmentación de secuencias, utilizando métodos multiescala computacionalmente eficientes. Implementa las metodologías de detección y segmentación de puntos de cambio de  "Tail-Greedy Unbalanced Haar", Segmentación binaria salvaje y Segmentación binaria salvaje adaptable.\\
+\subsubsection{Detección de múltiples puntos de cambio en la media de un vector utilizando el método Tail-Greedy Unbalanced Haar}
+Esta función calcula el número y la ubicación de los puntos de cambio en la media constante por tramos del vector de entrada $"$ruidoso", utilizando el método Tail Greedy Unbalanced Haar (ver detalles en \cite{breakfast}). También estima las medias constantes entre cada par de puntos de cambio vecinos. Funciona mejor cuando el ruido en el vector de entrada es independiente y distribuido de manera Gaussiana.  Ahora vemos el funcionamiento de esta función con los datos de prueba de Ford.\\
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{tgu.png}
+	 \label{tgu}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{tgu_plot.png}
+ 	\caption{\textit{Gráfica de tguh.cpt}}
+	 \label{tgu_plot}
+\end{figure}
+
+\subsubsection{Detección de múltiples puntos de cambio en la media de un vector utilizando el método WBS o Segmentación Binaria Salvaje}
+Esta función calcula el número y la ubicación de los puntos de cambio en la media constante por partes del vector de entrada $"$ruidoso", utilizando el método de Segmentación Binaria Salvaje (ver detalles en \cite{breakfast}). El número de puntos de cambio se elige a través del Criterio de Información Bayesiano (BIC). Las medias constantes entre cada par de puntos de cambio vecinos también se estiman. El método funciona mejor cuando el ruido en el vector de entrada es independiente y distribuido de manera Gaussiana, y cuando el número de puntos de cambio es pequeño.\\
+
+ En este caso, se puede elegir el número máximo de puntos de cambio a detectar con el parámetro 'Kmax'. Para una mejor visualización de los resultados le diremos a la función que detecte un máximo de 5 puntos de cambio. A continuación se ven los resultados con los datos de prueba de Ford:
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{wbs_bic.png}
+	 \label{wbs_bic}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{wbs_bic_plot.png}
+ 	\caption{\textit{Gráfica de wbs.bic.cpt}}
+	 \label{wbs_bic_plot}
+\end{figure}
+\subsubsection{Detección de múltiples puntos de cambio en la media de un vector utilizando el método WBS (Adaptive) o Segmentación Binaria Salvaje Adaptativo}
+Esta función calcula el número y la ubicación de los puntos de cambio en la media constante por tramos del vector de entrada $"$ruidoso", utilizando el método de Segmentación Binaria Salvaje daptativo (ver detalles en \cite{breakfast}). Las medias constantes entre cada par de puntos de cambio vecinos también se estiman. El método funciona mejor cuando el ruido en el vector de entrada es independiente y distribuido de manera Gaussiana.\\
+Funcionamiento del algoritmo con los datos de prueba de Ford:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{wbs.png}
+	 \label{wbs}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{wbs_plot.png}
+ 	\caption{\textit{Gráfica de wbs.cpt}}
+	 \label{wbs_plot}
+\end{figure}
+
+\subsubsection{Detección de K puntos de cambio en la media de un vector utilizando el método WBS (Adaptive) o Segmentación Binaria Salvaje Adaptativo}
+Esta función calcula el número y la ubicación de los puntos de cambio en la media constante por tramos del vector de entrada $"$ruidoso", utilizando el método de Segmentación binaria salvaje adaptativa (ver detalles en \cite{breakfast}). El número de puntos de cambio es exactamente K. También se estiman las medias constantes entre cada par de puntos de cambio vecinos. El método funciona mejor cuando el ruido en el vector de entrada es independiente y distribuido de manera Gaussiana.\\
+Como hemos hecho en el apartado de Segmentacion Binaria Salvaje no adaptativa, para una mejor visualización de los resultados, le vamos a pasar como parámetro K=5, para la detección de 5 puntos de cambio en el vector de prueba de Ford:
+ \begin{figure}[H]
+	\centering
+	\includegraphics[]{wbs_k.png}
+	 \label{wbs_k}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{wbs_k_plot.png}
+ 	\caption{\textit{Gráfica de wbs.k.cpt}}
+	 \label{wbs_k_plot}
+\end{figure}
+
+\subsubsection{Detección de múltiples puntos de cambio en la media de un vector que utiliza un híbrido entre los métodos TGUH y WBS adaptativo}
+Esta función estima el número y la ubicación de los puntos de cambio en la media constante por tramos del vector de entrada $"$ruidoso", combinando los métodos de Segmentación Binaria Salvaje Adaptativo y TGUH o "Tail-Greedy Unbalanced Haar". A continuación el funcionamiento del algoritmo con el vector de pruebas de Ford:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{hybrid.png}
+	 \label{hybrid}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{hybrid_plot.png}
+ 	\caption{\textit{Gráfica de hybrid.cpt}}
+	 \label{hybrid_plot}
+\end{figure}
+
+\newpage
+\section{Tablas de resultados de cada método de detección de punto de cambio único para cada patología}
+\subsection{Repositorio trend}
+\subsubsection{Pettitt's Test}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                            & Punto estimado & p-valor           & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                 & 686            & \textless 2.2e-16 & 0.02 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & \textless 2.2e-16 & 0.02 seg          \\ \hline
+P3. Ferricha adherida en clampa                 & 803            & \textless 2.2e-16 & 0.01 seg          \\ \hline
+P4. Falta de lubricación en cilindro                   & 180            & \textless 2.2e-16 & 0.01 seg          \\ \hline
+P5. Falta de lubricación en valvulas        & 73             & = 1.043e-10       & 0.02 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                      & 1326           & \textless 2.2e-16 & 0.02 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza            & 155            & = 0.0003828       & 0.01 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                  & 140            & = 2.916e-8        & 0.02 seg          \\ \hline
+P9. Falta de lubricación en atornilladora              & 19568          & \textless 2.2e-16 & 1 seg             \\ \hline
+P10. Muerte súbita de una pinza            & 359            & = 3.963e-13       & 0.02 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Buishand Range Test}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                            & Punto estimado & p-valor           & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                   & 686            & = 0.0212          & 33.48 seg         \\ \hline
+P2. Tornillo pasado en clampa & 143            & \textless 2.2e-16 & 2.26 seg          \\ \hline
+P3. Ferricha adherida en clampa                         & 849            & \textless 2.2e-16 & 55.72 seg         \\ \hline
+P4. Falta de lubricación en cilindro                    & 197            & \textless 2.2e-16 & 3.69 seg          \\ \hline
+P5. Falta de lubricación en valvulas        & 73             & \textless 2.2e-16 & 0.38 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                         & 1451           & \textless 2.2e-16 & 67.39 seg         \\ \hline
+P7. Fallo en el cilindro de una pinza            & 61             & = 0.00075         & 0.61 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                  & 262            & = 2.916e-8        & 3.67 seg          \\ \hline
+P9. Falta de lubricación en atornilladora             & NULL           & NULL              & NULL              \\ \hline
+P10. Muerte súbita de una pinza                 & 317            & \textless 2.2e-16 & 10.20 seg         \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Buishand U Test}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                          & Punto estimado & p-valor           & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                 & 686             & = 0.1082          & 33.69 seg         \\ \hline
+P2. Tornillo pasado en clampa & 143            & \textless 2.2e-16 & 2.58 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 849            & \textless 2.2e-16 & 57.67 seg         \\ \hline
+P4. Falta de lubricación en cilindro                  & 197            & \textless 2.2e-16 & 4.15 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 73             & \textless 2.2e-16 & 0.38 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                      & 1451           & \textless 2.2e-16 & 68.09 seg         \\ \hline
+P7. Fallo en el cilindro de una pinza           & 61             & = 0.05535         & 0.61 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 262            & = 2.2e-16         & 3.68 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & NULL           & NULL              & NULL              \\ \hline
+P10. Muerte súbita de una pinza                & 317            & \textless 2.2e-16 & 10.25 seg         \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Standard Normal Homogeneity Test}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                          & Punto estimado & p-valor           & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                & 88             & = 0.1762          & 34.92 seg         \\ \hline
+P2. Tornillo pasado en clampa & 143            & \textless 2.2e-16 & 2.58 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 849            & \textless 2.2e-16 & 57.67 seg         \\ \hline
+P4. Falta de lubricación en cilindro                  & 197            & \textless 2.2e-16 & 4.15 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & \textless 2.2e-16 & 0.50 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                      & 1712           & \textless 2.2e-16 & 69.54 seg         \\ \hline
+P7. Fallo en el cilindro de una pinza           & 61             & = 0.0546          & 0.76 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & \textless 2.2e-16 & 4.09 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & NULL           & NULL              & NULL              \\ \hline
+P10. Muerte súbita de una pinza                & 317            & \textless 2.2e-16 & 10.97 seg         \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsection{Repositorio strucchange}
+\subsubsection{Fstats}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                          & Punto estimado & p-valor             & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & = 0.2198            & 0.34 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & \textless 2.2e-16   & 0.03 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 849            & \textless 2.2e-16   & 0.53 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 197            & \textless 2.2e-16   & 0.05 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & \textless 1.954e-15 & 0.03 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                     & 1577           & \textless 2.2e-16   & 0.66seg           \\ \hline
+P7. Fallo en el cilindro de una pinza           & 61             & = 0.02678           & 0.03 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 140            & = 1.088e-6          & 0.07 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 18126          & \textless 2.2e-16   & 99.41 seg         \\ \hline
+P10. Muerte súbita de una pinza                & 317            & = 4.547e-13         & 0.11 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{efp OLS-CUSUM}
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                          & Punto estimado & p-valor             & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & = 0.1448            & 0.01 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & \textless 2.2e-16   & 0.03 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 849            & \textless 2.2e-16   & 0.04 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 197            & \textless 2.2e-16   & 0.03 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & \textless 1.756e-10 & 0.03 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                       & 1577           & \textless 2.2e-16   & 0.04 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 61             & = 0.02708           & 0.03 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & $\approx$ 200          & = 4.214e-6          & 0.04 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            &  $\approx$ 18126        & \textless 2.2e-16   & 0.18 seg          \\ \hline
+P10. Muerte súbita de una pinza                & $\approx$  317          & = 2.299e-12         & 0.04 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+\newpage
+\subsubsection{efp Rec-CUSUM}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                          & Punto estimado & p-valor           & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & = 0.08055         & 0.35 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & \textless 2.2e-16 & 0.08 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & $\approx$ 849            & \textless 2.2e-16 & 0.11 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 197            & \textless 2.2e-16 & 0.04 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & = 6.108e-11       & 0.03 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                       & $\approx$ 1370           & = 2.353e-9        & 0.08 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 61             & = 0.04498         & 0.03 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                &$\approx$ 200            & = 2.695e-11       & 0.06 seg          \\ \hline
+P9. Falta de lubricación en atornilladora           & 18126          & \textless 2.2e-16 & 0.58 seg          \\ \hline
+P10. Muerte súbita de una pinza                & $\approx$ 317            & = 0.004902        & 0.05 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+\subsubsection{efp OLS-MOSUM}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                          & Punto estimado & p-valor  & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & $\approx$ 195           & = 0.4952 & 0.5 seg           \\ \hline
+P2. Tornillo pasado en clampa & 143            & = 0.01   & 0.03 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & $\approx$ 750           & = 0.01   & 0.04 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & $\approx$ 330          & = 0.01   & 0.08 seg          \\ \hline
+P5. Falta de lubricación en valvulas     & 117            & = 0.01   & 0.04 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                     & 1370           & = 0.01   & 0.05 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & $\approx$ 50            & = 0.198  & 0.04 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & $\approx$ 200          & = 0.01   & 0.08 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & $\approx$ 6500         & = 0.01   & 0.16 seg          \\ \hline
+P10. Muerte súbita de una pinza              & $\approx$ 100          & = 0.01   & 0.05 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{efp Rec-MOSUM}
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|l|}
+\hline
+Patología                                          & Punto estimado & p-valor  & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               &  $\approx$ 195           & = 0.1524 & 0.1 seg           \\ \hline
+P2. Tornillo pasado en clampa & 143            & = 0.01   & 0.07 seg          \\ \hline
+P3. Ferricha adherida en clampa                       &  $\approx$ 750           & = 0.01   & 0.09 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 197            & = 0.01   & 0.08 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & = 0.01   & 0.05 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                       & 1370           & = 0.01   & 0.12 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza         &  $\approx$ 50            & = 0.1292 & 0.04 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                &  $\approx$ 200          & = 0.01   & 0.04 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            &  $\approx$ 6500         & = 0.01   & 0.81 seg          \\ \hline
+P10. Muerte súbita de una pinza                &  $\approx$ 100          & = 0.01   & 0.06 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+\newpage
+\subsection{Repositorio cpm}
+\textbf{Detección por lotes}
+\subsubsection{Detección por lotes: Student}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & NULL           & 0.39 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.14 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 849            & 0.37 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 197            & 0.17 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & 0.07 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                     & 1712           & 0.38 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & NULL           & 0.07 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.17 seg          \\ \hline
+P9. Falta de lubricación en atornilladora          & 20128          & 0.39 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 317            & 0.26 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+\subsubsection{Detección por lotes: Bartlett}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 88             & 0.40 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.14 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 454            & 0.37 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 175            & 0.18 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 56             & 0.06 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                       & 1452           & 0.39 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza          & 60             & 0.08 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 211            & 0.17 seg          \\ \hline
+P9. Falta de lubricación en atornilladora           & 18242          & 0.39 seg          \\ \hline
+P10. Muerte súbita de una pinza               & 301            & 0.28 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección por lotes: GLR}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa              & 88             & 0.38 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.14 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 454            & 0.39 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.17 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 56             & 0.06 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                     & 1452           & 0.42 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 60             & 0.08 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.17 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 18242          & 0.39 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 317            & 0.28 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección por lotes: Exponential}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 88             & 0.39 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.12 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 1566           & 0.43 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.17 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 73             & 0.06 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                      & 1574           & 0.37 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 61             & 0.07 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.17 seg          \\ \hline
+P9. Falta de lubricación en atornilladora           & NULL           & 0.39 seg          \\ \hline
+P10. Muerte súbita de una pinza               & NULL           & 0.30 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+\subsubsection{Detección por lotes: Mann-Whitney}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & 0.37 seg          \\ \hline
+P2. Tornillo pasado en clampa & 300            & 0.14 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 448            & 0.39 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.17 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 73             & 0.06 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                       & 1326           & 0.39 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza         & 155            & 0.07 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.17 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 19797          & 1.22 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 359            & 0.28 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección por lotes: Mood}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 1114           & 0.37 seg          \\ \hline
+P2. Tornillo pasado en clampa & 291            & 0.20 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 1549           & 0.37 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 282            & 0.17 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 107            & 0.06 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                      & 907            & 0.38 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza          & 161            & 0.06 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 268            & 0.17 seg          \\ \hline
+P9. Falta de lubricación en atornilladora           & 18389          & 1.24 seg          \\ \hline
+P10. Muerte súbita de una pinza                & NULL           & 0.28 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección por lotes: Lepage}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & 0.38 seg          \\ \hline
+P2. Tornillo pasado en clampa & 300            & 0.17 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 1566           & 0.37 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.17 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 90             & 0.07 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                       & 1450           & 0.37 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza          & 155            & 0.08 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 268            & 0.15 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 19550          & 2.02 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 359            & 0.27 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección por lotes: Kolmogorov-Smirnov}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 69             & 0.37 seg          \\ \hline
+P2. Tornillo pasado en clampa & 70             & 0.14 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 76             & 0.37 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 78             & 0.17 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 52             & 0.06 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                       & 213            & 0.39 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza          & 155            & 0.07 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 141            & 0.19 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 2318           & 2.58 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 359            & 0.28 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección por lotes: Cramer-von-Mises}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & 0.39 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.12 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 448            & 0.39 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.17 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 73             & 0.06 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                      & 1326           & 0.40 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza          & 155            & 0.07 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.17 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 19797          & 2.61 seg          \\ \hline
+P10. Muerte súbita de una pinza              & 359            & 0.28 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+\newpage
+\textbf{Detección secuencial}
+\subsubsection{Detección secuencial: Student}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa              & NULL           & 0.53 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.33 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 849            & 0.52 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 197            & 0.36 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & 0.25 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                    & 1712           & 0.52 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & NULL           & 0.27 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.34 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 20128          & 0.55 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 317            & 0.48 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección secuencial: Bartlett}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa              & 88             & 0.57 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.31 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 454            & 0.53 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 175            & 0.34 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 56             & 0.25 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                    & 1452           & 0.54 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 60             & 0.24 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 211            & 0.31 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 18242          & 0.51 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 301            & 0.42 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección secuencial: GLR}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 88             & 0.55 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.31 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 454            & 0.53 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.34 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 56             & 0.25 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                     & 1452           & 0.53 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 60             & 0.27 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.36 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 18242          & 0.55 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 317            & 0.46 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección secuencial: Exponential}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 88             & 0.53 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.28 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 1566           & 0.53 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.31 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 73             & 0.21 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                      & 1574           & 0.53 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 61             & 0.24 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.31 seg          \\ \hline
+P9. Falta de lubricación en atornilladora           & NULL           & 0.54 seg          \\ \hline
+P10. Muerte súbita de una pinza                & NULL           & 0.42 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección secuencial: Mann-Whitney}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & 0.52 seg          \\ \hline
+P2. Tornillo pasado en clampa & 300            & 0.31 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 448            & 0.54 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.35 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 73             & 0.24 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                      & 1326           & 0.58 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 155            & 0.26 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.36 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 19797          & 1.36 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 359            & 0.46 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección secuencial: Mood}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 1114           & 0.56 seg          \\ \hline
+P2. Tornillo pasado en clampa & 391            & 0.31 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 1549           & 0.51 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 282            & 0.36 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 107            & 0.23 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                       & 970            & 0.51 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza         & 161            & 0.25 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 268            & 0.36 seg          \\ \hline
+P9. Falta de lubricación en atornilladora           & 18389          & 1.36 seg          \\ \hline
+P10. Muerte súbita de una pinza                & NULL           & 0.44 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección secuencial: Lepage}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & 0.52 seg          \\ \hline
+P2. Tornillo pasado en clampa & 300            & 0.32 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 1566           & 0.52 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.34 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 90             & 0.25 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                     & 1450           & 0.53 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 155            & 0.27 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 268            & 0.35 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 19550          & 2.12 seg          \\ \hline
+P10. Muerte súbita de una pinza                & 359            & 0.43 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección secuencial: Kolmogorov-Smirnov}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 69             & 0.51 seg          \\ \hline
+P2. Tornillo pasado en clampa & 70             & 0.35 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 76             & 0.53 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 78             & 0.33 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 52             & 0.24 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                     & 213            & 0.55 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza           & 155            & 0.27 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 141            & 0.33 seg          \\ \hline
+P9. Falta de lubricación en atornilladora           & 2318           & 2.72 seg          \\ \hline
+P10. Muerte súbita de una pinza               & 359            & 0.42 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Detección secuencial: Cramer-von-Mises}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                          & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa               & 686            & 0.52 seg          \\ \hline
+P2. Tornillo pasado en clampa & 143            & 0.31 seg          \\ \hline
+P3. Ferricha adherida en clampa                       & 448            & 0.52 seg          \\ \hline
+P4. Falta de lubricación en cilindro                  & 180            & 0.34 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 73             & 0.25 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2                    & 1326           & 0.53 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza         & 155            & 0.25 seg          \\ \hline
+P8. Fuga de aire en pinza neumática                & 393            & 0.35 seg          \\ \hline
+P9. Falta de lubricación en atornilladora            & 19797          & 2.68 seg          \\ \hline
+P10. Muerte súbita de una pinza               & 359            & 0.44 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\newpage
+\subsection{Repositorio changepoint}
+\subsubsection{Cambio en la media con estadística "Normal"}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                 & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                & 88             & 0.02 seg          \\ \hline
+P2. Tornillo pasado en clampa             & 143            & 0.01 seg          \\ \hline
+P3. Ferricha adherida en clampa           & NULL           & 0.01 seg          \\ \hline
+P4. Falta de lubricación en cilindro      & NULL           & 0.02 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & 0.02 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2       & 1712           & 0.01 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza     & 61             & 0.01 seg          \\ \hline
+P8. Fuga de aire en pinza neumática       & 393            & 0.02 seg          \\ \hline
+P9. Falta de lubricación en atornilladora & 20128          & 0.01 seg          \\ \hline
+P10. Muerte súbita de una pinza           & NULL           & 0.01 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Cambio en la media con estadística $"$CUSUM"}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                 & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                & 687            & 0.03 seg          \\ \hline
+P2. Tornillo pasado en clampa             & 144            & 0.02 seg          \\ \hline
+P3. Ferricha adherida en clampa           & 850            & 0.02 seg          \\ \hline
+P4. Falta de lubricación en cilindro      & 198            & 0.01 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 74             & 0.01 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2       & 1452           & 0.01 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza     & 62             & 0.01 seg          \\ \hline
+P8. Fuga de aire en pinza neumática       & 263            & 0.03 seg          \\ \hline
+P9. Falta de lubricación en atornilladora & 12350          & 0.02 seg          \\ \hline
+P10. Muerte súbita de una pinza           & 318            & 0.02 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Cambio en la varianza con estadística "Normal"}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                 & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                & 88             & 0.01 seg          \\ \hline
+P2. Tornillo pasado en clampa             & NULL           & 0.03 seg          \\ \hline
+P3. Ferricha adherida en clampa           & 849            & 0.01 seg          \\ \hline
+P4. Falta de lubricación en cilindro      & 282            & 0.02 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 102            & 0.02 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2       & 1712           & 0.01 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza     & 61             & 0.01 seg          \\ \hline
+P8. Fuga de aire en pinza neumática       & 268            & 0.01 seg          \\ \hline
+P9. Falta de lubricación en atornilladora & 18242          & 0.02 seg          \\ \hline
+P10. Muerte súbita de una pinza           & NULL           & 0.02 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Cambio en la varianza con estadística $"$CSS"}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                 & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                & 87             & 0.01 seg          \\ \hline
+P2. Tornillo pasado en clampa             & 145            & 0.01 seg          \\ \hline
+P3. Ferricha adherida en clampa           & 848            & 0.02 seg          \\ \hline
+P4. Falta de lubricación en cilindro      & 196            & 0.02 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 89             & 0.02 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2       & 1711           & 0.02 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza     & 60             & 0.02 seg          \\ \hline
+P8. Fuga de aire en pinza neumática       & 261            & 0.01 seg          \\ \hline
+P9. Falta de lubricación en atornilladora & 14091          & 0.02 seg          \\ \hline
+P10. Muerte súbita de una pinza           & 316            & 0.03 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Cambio en la media y la varianza con estadística "Normal"}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                 & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                & 88             & 0.01 seg          \\ \hline
+P2. Tornillo pasado en clampa             & 143            & 0.02 seg          \\ \hline
+P3. Ferricha adherida en clampa           & 454            & 0.01 seg          \\ \hline
+P4. Falta de lubricación en cilindro      & 180            & 0.01 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 56             & 0.01 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2       & 1452           & 0.02 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza     & 60             & 0.01 seg          \\ \hline
+P8. Fuga de aire en pinza neumática       & 393            & 0.01 seg          \\ \hline
+P9. Falta de lubricación en atornilladora & 18242          & 0.01 seg          \\ \hline
+P10. Muerte súbita de una pinza           & 317            & 0.02 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+
+\subsubsection{Cambio en la media y la varianza con estadística $"$Exponential"}
+
+\begin{table}[H]
+\resizebox{16cm}{!}{
+\begin{tabular}{|l|l|l|}
+\hline
+Patología                                 & Punto estimado & Tiempo de computo \\ \hline
+P1. Brida dañada en clampa                & 88             & 0.02 seg          \\ \hline
+P2. Tornillo pasado en clampa             & 143            & 0.01 seg          \\ \hline
+P3. Ferricha adherida en clampa           & 1566           & 0.02 seg          \\ \hline
+P4. Falta de lubricación en cilindro      & 180            & 0.02 seg          \\ \hline
+P5. Falta de lubricación en valvulas      & 73             & 0.01 seg          \\ \hline
+P6. Brida dañada en clampa caso nº2       & 1574           & 0.02 seg          \\ \hline
+P7. Fallo en el cilindro de una pinza     & 61             & 0.04 seg          \\ \hline
+P8. Fuga de aire en pinza neumática       & 393            & 0.01 seg          \\ \hline
+P9. Falta de lubricación en atornilladora & NULL           & 0.02 seg          \\ \hline
+P10. Muerte súbita de una pinza           & NULL           & 0.02 seg          \\ \hline
+\end{tabular}
+}
+\end{table}
+
+
+\newpage
+\subsection{Tabla de resultados de los métodos de detección de puntos de cambio según patología}
+
+\begin{table}[H]
+\begin{turn}{90}
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|}
+\hline
+Patología                      & P1   & P2   & P3   & P4   & P5  & P6   & P7   & P8  & P9    & P10  \\ \hline
+Pettitt                        & 686  & 143  & 803  & 180  & 73  & 1326 & 155  & 140 & 19568 & 359  \\ \hline
+Buishand R                     & 686  & 143  & 849  & 197  & 73  & 1451 & 61   & 262 & NULL  & 317  \\ \hline
+Buishand U                     & 686  & 143  & 849  & 197  & 73  & 1451 & 61   & 262 & NULL  & 317  \\ \hline
+SNHT                           & 88   & 143  & 849  & 197  & 89  & 1712 & 61   & 393 & NULL  & 317  \\ \hline
+Fstats                         & 686  & 143  & 849  & 197  & 89  & 1577 & 61   & 140 & 18126 & 317  \\ \hline
+Lotes: Student                 & NULL & 143  & 849  & 197  & 89  & 1712 & NULL & 393 & 20128 & 317  \\ \hline
+Lotes: Bartlett                & 88   & 143  & 454  & 175  & 56  & 1452 & 60   & 211 & 18242 & 301  \\ \hline
+Lotes: GLR                     & 88   & 143  & 454  & 180  & 56  & 1452 & 60   & 393 & 18242 & 317  \\ \hline
+Lotes: Exponential             & 88   & 143  & 1566 & 180  & 73  & 1574 & 61   & 393 & NULL  & NULL \\ \hline
+Lotes: Mann-Whitney            & 686  & 300  & 448  & 180  & 73  & 1326 & 155  & 393 & 19797 & 359  \\ \hline
+Lotes: Mood                    & 1114 & 291  & 1549 & 282  & 107 & 907  & 161  & 268 & 18389 & NULL \\ \hline
+Lotes: Lepage                  & 686  & 300  & 1566 & 180  & 90  & 1450 & 155  & 268 & 19550 & 359  \\ \hline
+Lotes: Kolmogorov-Smirnov      & 69   & 70   & 76   & 78   & 52  & 213  & 155  & 141 & 2318  & 359  \\ \hline
+Lotes: Cramer-von-Mises        & 686  & 143  & 448  & 180  & 73  & 1326 & 155  & 393 & 19797 & 359  \\ \hline
+Secuencial: Student            & NULL & 143  & 849  & 197  & 89  & 1712 & NULL & 393 & 20128 & 317  \\ \hline
+Secuencial: Bartlett           & 88   & 143  & 454  & 175  & 56  & 1452 & 60   & 211 & 18242 & 301  \\ \hline
+Secuencial: GLR                & 88   & 143  & 454  & 180  & 56  & 1452 & 60   & 393 & 18242 & 317  \\ \hline
+Secuencial: Exponential        & 88   & 143  & 1566 & 180  & 73  & 1574 & 61   & 393 & NULL  & NULL \\ \hline
+Secuencial: Mann-Whitney       & 686  & 300  & 448  & 180  & 73  & 1326 & 155  & 393 & 19797 & 359  \\ \hline
+Secuencial: Mood               & 1114 & 391  & 1549 & 282  & 107 & 970  & 161  & 268 & 18389 & NULL \\ \hline
+Secuencial: Lepage             & 686  & 300  & 1566 & 180  & 90  & 1450 & 155  & 268 & 19550 & 359  \\ \hline
+Secuencial: Kolmogorov-Smirnov & 69   & 70   & 76   & 78   & 52  & 213  & 155  & 141 & 2318  & 359  \\ \hline
+Secuencial: Cramer-von-Mises   & 686  & 143  & 448  & 180  & 73  & 1326 & 155  & 393 & 19797 & 359  \\ \hline
+Media Normal                   & 88   & 143  & NULL & NULL & 89  & 1712 & 61   & 393 & 20128 & NULL \\ \hline
+Media CUSUM                    & 687  & 144  & 850  & 198  & 74  & 1452 & 62   & 263 & 12350 & 318  \\ \hline
+Varianza Normal                & 88   & NULL & 849  & 282  & 102 & 1712 & 61   & 268 & 18242 & NULL \\ \hline
+Varianza CSS                   & 87   & 145  & 848  & 196  & 89  & 1711 & 60   & 261 & 14091 & 316  \\ \hline
+Media y Varianza Normal        & 88   & 143  & 454  & 180  & 56  & 1452 & 60   & 393 & 18242 & 317  \\ \hline
+Media y Varianza Exponential   & 88   & 143  & 1566 & 180  & 73  & 1574 & 61   & 393 & NULL  & NULL \\ \hline
+\end{tabular}
+\end{turn}
+\end{table}
+
+\newpage
+\section{Gráficas de resultados de cada patología para cada método de detección de cambio de punto}
+Para poder observar de una forma más visual los resultados de los métodos de detección de punto de cambio, veremos una gráfica donde se indicará en que posición, determinado método, ha estimado el punto de cambio.
+\subsection{Gráfica de brida dañada en clampa neumática}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{conclusion_clampa.png}
+	\caption{\textit{Gráfica de brida dañada en clampa neumática}}
+	 \label{conclusion_clampa}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1}\\ SNHT\\ Lotes: Bartlett, GLR, Exponential\\ Secuencial: Bartlett, GLR, Exponential \\ Media Normal \\ Varianza CSS \\ Media y Varianza Normal \\ Media y Varianza Exponential
+	\item \textbf{Punto 2}\\ Pettitt \\ Buishand R \\ Buishand U \\ Fstats \\ Lotes: Mann-Whitney, Lepage, Cramer-von-Mises \\ Secuencial:  Mann-Whitney, Lepage, Cramer-von-Mises \\ Media CUSUM \\
+\end{itemize}
+
+\newpage
+\subsection{Gráfica de tornillo pasado o partido en clampa neumática}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{conclusion_tornillo.png}
+	\caption{\textit{Gráfica de tornillo pasado o partido en clampa neumática}}
+	 \label{conclusion_tornillo}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\ Pettitt \\ Buishand R \\ Buishand U \\ SNHT \\ Fstats \\ Lotes: Student, Bartlett, GLR, Exponential, Cramer-vos-Mises \\ Secuencial: Student, Bartlett, GLR, Exponential, Cramer-vos-Mises \\ Media CUSUM \\ Varianza CSS \\ Media y Varianza Normal \\ Media y Varianza Exponential\\
+	\item \textbf{Punto 2} \\Lotes: Mann-Whitney, Mood, Lepage\\ Secuencial: Mann-Whitney, Mood, Lepage\\
+\end{itemize}
+
+\newpage
+\subsection{Gráfica de ferricha adherida en clampa neumática}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{conclusion_ferricha.png}
+	\caption{\textit{Gráfica de ferricha adherida en clampa neumática}}
+	 \label{conclusion_ferricha}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\ Lotes: Kolmogorov-Smirnov \\ Secuencial:  Kolmogorov-Smirnov 
+	\item \textbf{Punto 2} \\ Lotes: Bartlett, GLR, Mann-Whitney, Cramer-vos-Mises \\ Secuencial: Bartlett, GLR, Mann-Whitney, Cramer-vos-Mises 
+	\item \textbf{Punto 3} \\ Pettitt 
+	\item \textbf{Punto 4} \\ Buishand R\\ Buishand U\\ SNHT\\ Fstats \\ Lotes: Student \\ Secuencial: Student\\ Media CUSUM \\ Varianza Normal \\ Varianza CSS
+	\item \textbf{Punto 5} \\ Lotes: Exponential, Mood, Lepage \\ Secuencial:  Exponential, Mood, Lepage \\ Media y Varianza Exponential
+\end{itemize}
+
+\subsection{Gráfica de falta de lubricación en el cilindro de la pinza neumática}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{conclusion_cilindro.png}
+	\caption{\textit{Gráfica de falta de lubricación en el cilindro de la pinza neumática}}
+	 \label{conclusion_cilindro}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\ Lotes: Kolmogorov-Smirnov \\ Secuencial:  Kolmogorov-Smirnov 
+	\item \textbf{Punto 2} \\ Lotes: Bartlett \\ Secuencial: Bartlett 
+	\item \textbf{Punto 3} \\ Pettitt \\ Lotes: GLR, Exponential, Mann-Whitney, Lepage, Cramer-von-Mises \\ Secuencial: GLR, Exponential, Mann-Whitney, Lepage, Cramer-von-Mises \\ Media y Varianza Normal \\ Media y Varianza Exponential
+	\item \textbf{Punto 4} \\ Buishand R\\ Buishand U\\ SNHT\\ Fstats \\ Lotes: Student \\ Secuencial: Student\\ Media CUSUM  \\ Varianza CSS
+	\item \textbf{Punto 5} \\ Lotes: Mood\\ Secuencial: Mood\\ Varianza Normal
+\end{itemize}
+
+\newpage
+\subsection{Gráfica de falta de lubricación en las valvulas de la pinza neumática}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{conclusion_valvula.png}
+	\caption{\textit{Gráfica de falta de lubricación en las valvulas de la pinza neumática}}
+	 \label{conclusion_valvula}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\ Lotes: Kolmogorov-Smirnov \\ Secuencial:  Kolmogorov-Smirnov 
+	\item \textbf{Punto 2} \\ Lotes: Bartlett, GLR \\ Secuencial: Bartlett, GLR \\ Media y Varianza Normal
+	\item \textbf{Punto 3} \\ Pettitt \\ Buishand R\\ Buishand U \\ Lotes:  Exponential, Mann-Whitney, Cramer-von-Mises \\ Secuencial: Exponential, Mann-Whitney, Cramer-von-Mises \\ Media CUSUM \\ Media y Varianza Exponential
+	\item \textbf{Punto 4} SNHT\\ Fstats \\ Lotes: Student \\ Secuencial: Student\\ Media Normal \\ Varianza CSS
+	\item \textbf{Punto 5} \\ Lotes: Lepage\\ Secuencial: Lepage
+	\item \textbf{Punto 6} \\ Varianza Normal
+	\item \textbf{Punto 7} \\ Lotes: Mood\\ Secuencial: Mood
+\end{itemize}
+
+\newpage
+\subsection{Gráfica de brida dañada en clampa neumática caso  nº2}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{conclusion_pico.png}
+	\caption{\textit{Gráfica de brida dañada en clampa neumática caso  nº2}}
+	 \label{conclusion_pico}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\ Lotes: Mood \\ Secuencial: Mood
+	\item \textbf{Punto 2} \\ Pettitt \\ Lotes: Mann-Whitney, Cramer-von-Mises \\ Secuencial: Mann-Whitney, Cramer-von-Mises 
+	\item \textbf{Punto 3} \\ Buishand R\\ Buishand U \\ Lotes:  Bartlett, GLR, Lepage \\ Secuencial: Bartlett, GLR, Lepage \\ Media CUSUM \\ Media y Varianza Normal
+	\item \textbf{Punto 4} \\ Fstats \\ Lotes: Exponential \\ Secuencial: Exponential \\ Media y Varianza Exponential
+	\item \textbf{Punto 5} \\ SNHT \\ Lotes: Student\\ Secuencial: Student \\ Media Normal \\ Varianza Normal \\ Varianza CSS
+	
+\end{itemize}
+
+\newpage
+\subsection{Gráfica de fallo en el cilindro de una pinza neumática}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{conclusion_comunicado.png}
+	\caption{\textit{Gráfica de fallo en el cilindro de una pinza neumática}}
+	 \label{conclusion_comunicado}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\ Buishand R\\ Buishand U \\ SNHT \\ Fstats \\ Lotes: Bartlett, GLR, Exponential \\ Secuencial: Bartlett, GLR, Exponential  \\ Media Normal \\ Media CUSUM \\ Varianza Normal \\ Varianza CSS \\ Media y Varianza Normal \\ Media y Varianza Exponential
+	\item \textbf{Punto 2} \\ Lotes: Mann-Whitney, Lepage, Kolmogorov-Smirnov, Cramer-von-Mises \\ Secuencial: Mann-Whitney, Lepage, Kolmogorov-Smirnov, Cramer-von-Mises 
+	\item \textbf{Punto 3} \\ Lotes:  Mood \\ Secuencial: Mood 
+	
+\end{itemize}
+
+\newpage
+\subsection{Gráfica de fuga de aire en pinza neumática}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{conclusion_fuga.png}
+	\caption{\textit{Gráfica de fuga de aire en pinza neumática}}
+	 \label{conclusion_fuga}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\ Pettitt \\ Fstats \\ Lotes: Kolmogorov-Smirnov \\ Secuencial: Kolmogorov-Smirnov
+	\item \textbf{Punto 2} \\ Lotes: Bartlett \\ Secuencial: Bartlett
+	\item \textbf{Punto 3} \\ Buishand R\\ Buishand U \\ Lotes:  Mood, Lepage \\ Secuencial: Mood, Lepage \\ Media CUSUM \\  Varianza Normal \\ Varianza CSS
+	\item \textbf{Punto 4} \\ SNHT \\ Lotes: Student, GLR, Exponential, Mann-Whitney, Cramer-von-Mises \\ Secuencial: Student, GLR, Exponential, Mann-Whitney, Cramer-von-Mises \\ Media Normal \\  Media y Varianza Normal \\ Media y Varianza Exponential
+
+\end{itemize}
+
+\newpage
+\subsection{Gráfica de falta de lubricación en atornilladora}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{conclusion_atornilladora.png}
+	\caption{\textit{Gráfica de falta de lubricación en atornilladora}}
+	 \label{conclusion_atornilladora}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\  Lotes: Kolmogorov-Smirnov \\ Secuencial: Kolmogorov-Smirnov
+	\item \textbf{Punto 2} \\ Media CUSUM
+	\item \textbf{Punto 3} \\ Varianza CSS
+	\item \textbf{Punto 4} \\ SNHT \\ Lotes: Student \\ Secuencial: Student \\ Media Normal \\  
+	\item \textbf{Punto 5} \\ Fstats
+	\item \textbf{Punto 6} \\ Lotes: Bartlett, Mood \\ Secuencial: Bartlett, Mood \\ Varianza Normal \\ Media y Varianza Normal
+	\item \textbf{Punto 7} \\ Pettitt \\ Lotes: Lepage \\ Secuencial: Lepage
+	\item \textbf{Punto 8} \\  Lotes: Mann-Whitney, Cramer-von-Mises \\ Secuencial: Mann-Whitney, Cramer-von-Mises
+\end{itemize}
+
+\newpage
+\subsection{Gráfica de muerte súbita de una pinza neumática}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{conclusion_muerte.png}
+	\caption{\textit{Gráfica de muerte súbita de una pinza neumática}}
+	 \label{conclusion_muerte}
+\end{figure}
+\subsubsection{Métodos de detección de punto de cambio}
+\begin{itemize}
+	\item \textbf{Punto 1} \\ Lotes: Bartlett \\ Secuencial: Bartlett
+	\item \textbf{Punto 2} \\ Buishand R\\ Buishand U \\ SNHT \\ Fstats \\ Lotes:  Student, GLR \\ Secuencial: Student, GLR \\ Media CUSUM \\ Varianza CSS \\ Media y Varianza Normal
+	\item \textbf{Punto 3} \\ Lotes:  Mann-Whitney, Lepage, Kolmogorov-Smirnov, Cramer-von-Mises \\ Secuencial:  Mann-Whitney, Lepage, Kolmogorov-Smirnov, Cramer-von-Mises 
+
+
+\end{itemize}
+
+\pagebreak
+
+
+\begin{thebibliography}{1}
+
+\bibliographystyle{spbasic}
+
+\bibitem{actualidad}
+http://www.fund-barredo.es/la-importancia-de-la-tecnologia-en-las-empresas/\\
+
+\bibitem{tendencias}
+Accenture: Digital Business Era: Strech your boundaries. Accenture Technology Vision 2015\\
+
+\bibitem{wiki}
+https://es.wikipedia.org/wiki/Producción-en-cadena\\
+
+\bibitem{industria40}
+Juan Carlos Latorre Iranzo. Dashboard para la toma de decisiones en la factoría Ford Valencia. Universidad CEU Cardenal Herrera. Julio 2017\\
+
+\bibitem{bigdata}
+https://www.oracle.com/es/big-data/guide/what-is-big-data.html\\
+
+\bibitem{tesis}
+Dr. E. García Magraner. Análisis de los sub-tiempos de ciclo técnico para la mejora del rendimiento de las líneas de fabricación. Tesis Doctoral-Valencia (2016).\\
+
+\bibitem{trend}
+Thorsten Pohlert. Non-Parametric Trend Tests and Change-Point Detection. July 30, 2018.\\
+
+\bibitem{strucchange}
+Achim Zeileis, Friedrich Leisch, Kurt Hornik and Christian Kleiber. strucchange: An R Package for Testing for Structural Change in Linear Regression Models\\
+
+\bibitem{wbsts}
+Karolos K. Korkas and Piotr Fryzlewicz. Multiple Change-point Detection for non-stationary Time Series Using Wild Binary Segmentation. London School of Economics. 2017\\
+
+\bibitem{wbs}
+Rafal Baranowski and Piotr Fryzlewicz. Wild Binary Segmentation for Multiple Change-Point Detection. 2019-04-17.\\
+
+\bibitem{cpm}
+Gordon J. Ross. Sequential and Batch Change Detection Using Parametric and Nonparametric Methods. July 28, 2015.\\
+
+\bibitem{not}
+Rafal Baranowski, Yining Chen, and Piotr Fryzlewicz, Narrowest-Over-Threshold Change-point Detection, Department of Statistics, London School of Economics and Political Science, Houghton Street, London, WC2A 2AE, UK. January 30, 2018.\\
+
+\bibitem{changepoint}
+Rebecca Killick, Methods for Changepoint Detection. 2016-10-04\\
+
+\bibitem{changepoint.np}
+Kaylea Haynes, Rebecca Killick, Paul Fearnhead, Idris Eckley and Daniel Grose. Methods for Nonparametric Changepoint Detection. 2019-05-20.\\
+
+\bibitem{breakfast}
+Piotr Fryzlewicz. Multiple Change-point Detection and Segmentation. 2017-09-28. \\
+
+
+
+\end{thebibliography}
+
+\end{document}
